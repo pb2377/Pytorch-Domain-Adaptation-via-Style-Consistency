@@ -13,6 +13,7 @@ import preprocess
 import json
 from utils.utils import report_and_save
 import pseudolabel
+from itertools import cycle
 
 
 def pseudolabel_trainer(model, args, output_dir, stylized_root, num_classes):
@@ -98,7 +99,6 @@ def get_dataloaders(args, stylized_root, pslabels):
     return train_loader, ps_loader, val_data
 
 
-
 def train(model, ps_pair, sc_pair, optimizer, val_dataset, max_iter, output_path,
                       log_freq=1000, test_freq=100, aux_criterion=None):
     """
@@ -120,7 +120,8 @@ def train(model, ps_pair, sc_pair, optimizer, val_dataset, max_iter, output_path
     writer = SummaryWriter(log_dir=os.path.join(output_path, 'pseudolabel'))
     writer.add_scalar("Test_mAP", 0., 0)
 
-    print("Training Classifier...")
+    if torch.cuda.is_available():
+        model = model.cuda()
     while iteration <= max_iter:
         for ps_batch, sc_batch in zip(cycle(ps_loader), sc_loader):
             ps_images, ps_style_ims, ps_targets = ps_batch

@@ -51,17 +51,7 @@ def base_trainer(model, args, output_dir, stylized_root, num_classes):
             os.makedirs(os.path.join(output_dir, 'weights'))
 
         # Ensure dataset is fully preprocessed
-        if args.mode == 'fast':
-            if not args.no_prep:
-                preserve_colour = False
-                if args.preserve_colours == 'random':
-                    preserve_colour = None
-                elif args.preserve_colours == 'preserve':
-                    preserve_colour = True
-                print('Stylizing Dataset...')
-                preprocess.preprocess(train_dataset, args.target_domain, args.max_its, args.batch_size, args.style_root,
-                                      stylized_root, set_type='train', preserve_colour=preserve_colour,
-                                      pseudo=args.pseudolabel)
+        preprocess.check_preprocess(args, train_loader, stylized_root, pseudolabel=False)
 
         model, best_model, best_map, accuracy_history = train(model, ssd_criterion, optimizer, train_loader,
                                                                       val_data, args.max_its, output_dir,
@@ -83,6 +73,8 @@ def train(model, criterion, optimizer, train_loader, val_dataset, max_iter, outp
     writer = SummaryWriter(log_dir=output_path)
     writer.add_scalar("Test_mAP", 0., 0)
 
+    if torch.cuda.is_available():
+        model = model.cuda()
     while iteration <= max_iter:
         for images, style_ims, targets in train_loader:
             optimizer.zero_grad()
