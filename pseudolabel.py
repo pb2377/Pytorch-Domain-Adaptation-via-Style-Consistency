@@ -22,6 +22,7 @@ VOC_CLASSES = (  # always index 0
 
 def pseudolabel(net, dataset, pthresh, overlap_thresh=0.45):
     """Pseudolabel positives"""
+    net.eval()
     num_images = len(dataset)
     all_boxes = [[[] for _ in range(num_images)]
                  for _ in range(len(labelmap)+1)]

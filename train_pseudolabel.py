@@ -123,6 +123,7 @@ def train(model, ps_pair, sc_pair, optimizer, val_dataset, max_iter, output_path
     writer = SummaryWriter(log_dir=os.path.join(output_path, 'pseudolabel'))
     writer.add_scalar("Test_mAP", 0., 0)
 
+    model.train()
     if torch.cuda.is_available():
         model = model.cuda()
     while iteration <= max_iter:
