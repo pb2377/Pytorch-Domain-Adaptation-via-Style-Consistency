@@ -429,7 +429,7 @@ class PseudolabelDataset(data.Dataset):
         return style_ids
 
     def __getitem__(self, index):
-        im, style_im, _, gt, h, w = self.pull_item(index)
+        im, style_im, gt, h, w = self.pull_item(index)
         return im, style_im, None, gt
 
     def __len__(self):
@@ -464,7 +464,6 @@ class PseudolabelDataset(data.Dataset):
 
         style_img = fix_size(style_img, height, width)
 
-        seg_mask = None
         if self.transform is not None:
             target = np.array(target)
             img, style_img, boxes, labels = self.transform(img, style_img, target[:, :4], target[:, 4])
@@ -472,7 +471,6 @@ class PseudolabelDataset(data.Dataset):
             img = img[:, :, (2, 1, 0)].astype(np.float32)
             style_img = style_img[:, :, (2, 1, 0)].astype(np.float32)
             target = np.hstack((boxes, np.expand_dims(labels, axis=1)))
-        seg_mask = 0
         return torch.from_numpy(img).permute(2, 0, 1), torch.from_numpy(style_img).permute(2, 0, 1), target, height, width
 
     def pull_image_and_info(self, index):
