@@ -111,6 +111,7 @@ def train(model, criterion, optimizer, train_loader, val_dataset, max_iter, outp
                 loss_aux += aux_criterion(aux_ph, aux_st)
 
             loss = loss + loss_aux
+            print(loss.item())
 
             loss.backward()
             optimizer.step()

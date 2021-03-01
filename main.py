@@ -142,7 +142,7 @@ def main(args, cfg):
             else:
                 raise OSError('Cannot find checkoint {}'.format(args.checkpoint))
 
-        print("Training Base Model on Stylized Photos pairs....")
+        print("\nTraining Base Model on Stylized Photos pairs....")
         if not args.pseudolabel:
             trainer.base_trainer(model, args, output_dir, stylized_root, num_classes)
 
@@ -154,7 +154,7 @@ def main(args, cfg):
             state_dict_to_load = torch.load(args.checkpoint, map_location='cpu')
             model.load_state_dict(state_dict_to_load)
 
-        print("Training with Joint Datasety of Pseudolabelled Art and Stylized Photos pairs....")
+        print("\nTraining with Joint Datasety of Pseudolabelled Art and Stylized Photos pairs....")
         model = train_pseudolabel.pseudolabel_trainer(model, args, output_dir, stylized_root, num_classes)
 
     elif args.eval:

@@ -58,7 +58,6 @@ def preprocess(base_dataset, target_domain, max_its, batch_size, style_root, sty
                 if outpath is not None:
                     with torch.no_grad():
                         style_im = style_transfer(image.unsqueeze(0), style_source.unsqueeze(0))
-                    # export_image([image, style_im, style_source], output_path=outpath)
                     export_image(style_im, output_path=outpath)
                     del style_im, image
                 else:
