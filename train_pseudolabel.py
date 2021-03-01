@@ -103,7 +103,7 @@ def get_dataloaders(args, stylized_root, pslabels):
 
 
 def train(model, ps_pair, sc_pair, optimizer, val_dataset, max_iter, output_path,
-                      log_freq=1000, test_freq=100, aux_criterion=None):
+                      log_freq=100, test_freq=100, aux_criterion=None):
     """
     As standard trainer but with mixed dataset of Pseudolabels and Labelled VOC data, and train much like "frustratingly
     easy few shot learning" and evaluate on batches of the source and novel (pseudo) examples.
@@ -196,7 +196,7 @@ def train(model, ps_pair, sc_pair, optimizer, val_dataset, max_iter, output_path
                 writer.add_scalar("Loss_PS", loss_ps.item(), iteration)
                 writer.add_scalar("Conf_loss_PS", loss_c_ps.item(), iteration)
                 writer.add_scalar("Loc_loss_PS", loss_l_ps.item(), iteration)
-                writer.add_scalar("Style_loss", loss_aux_ps, iteration)
+                writer.add_scalar("Style_loss", loss_aux_ps.cpu().numpy().float(), iteration)
 
             if iteration != 0 and iteration % 5000 == 0:
                 print('Saving state, iter:', iteration)

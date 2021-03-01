@@ -71,7 +71,7 @@ def base_trainer(model, args, output_dir, stylized_root, num_classes):
         return model
 
 
-def train(model, criterion, optimizer, train_loader, val_dataset, max_iter, output_path, log_freq=1000, test_freq=100,
+def train(model, criterion, optimizer, train_loader, val_dataset, max_iter, output_path, log_freq=100, test_freq=100,
           aux_criterion=None):
     iteration = 0
     epoch = 0
