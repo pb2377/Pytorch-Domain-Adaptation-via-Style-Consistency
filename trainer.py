@@ -145,13 +145,13 @@ def train(model, criterion, optimizer, train_loader, val_dataset, max_iter, outp
                         best_model = copy.deepcopy(model.state_dict())
 
                     # Add to summary writer
-            else:
-                if not iteration % 1000 and iteration > 0:
-                    model.eval()
-                    eval.FULL_REPORT = False
-                    acc = eval.evaluate(model, val_dataset, os.path.join(output_path, 'tempdets'.format(iteration)))
-                    writer.add_scalar("Test_mAP", acc['mAP'], iteration)
-                    model.train()
+            # else:
+            #     if not iteration % 1000 and iteration > 0:
+            #         model.eval()
+            #         eval.FULL_REPORT = False
+            #         acc = eval.evaluate(model, val_dataset, os.path.join(output_path, 'tempdets'.format(iteration)))
+            #         writer.add_scalar("Test_mAP", acc['mAP'], iteration)
+            #         model.train()
 
             iteration += 1
         epoch += 1

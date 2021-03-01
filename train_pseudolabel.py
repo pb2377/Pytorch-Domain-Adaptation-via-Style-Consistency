@@ -221,14 +221,14 @@ def train(model, ps_pair, sc_pair, optimizer, val_dataset, max_iter, output_path
                         best_model = copy.deepcopy(model.state_dict())
 
                     # summary writer
-            else:
-                if not iteration % 1000 and iteration > 0:
-                    model.eval()
-                    eval.FULL_REPORT = False
-                    acc = eval.evaluate(model, val_dataset, os.path.join(output_path, 'tempdets'.format(iteration)))
-                    writer.add_scalar("Test_mAP", acc['mAP'], iteration)
-                    model.train()
-                    # summary writer
+            # else:
+            #     if not iteration % 1000 and iteration > 0:
+            #         model.eval()
+            #         eval.FULL_REPORT = False
+            #         acc = eval.evaluate(model, val_dataset, os.path.join(output_path, 'tempdets'.format(iteration)))
+            #         writer.add_scalar("Test_mAP", acc['mAP'], iteration)
+            #         model.train()
+            #         # summary writer
 
             iteration += 1
         epoch += 1

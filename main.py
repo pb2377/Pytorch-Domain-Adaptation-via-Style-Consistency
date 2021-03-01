@@ -43,7 +43,7 @@ parser.add_argument('--save_folder', default='weights/',
                     help='Directory for saving checkpoint models')
 parser.add_argument('--max_its', default=None, type=int, help='Max training iterations')
 parser.add_argument('--test_freq', default=100, type=int, help='Frequency to test model at the end of training.')
-parser.add_argument('--log_freq', default=1000, type=int, help='Frequency to report training losses.')
+parser.add_argument('--log_freq', default=100, type=int, help='Frequency to report training losses.')
 parser.add_argument('--style_root', default='../Datasets/Clipart-Watercolor-Comic/',
                     help='Root for clipart-watercolor-comic dataset.')
 parser.add_argument('--voc_root', default='../Datasets/VOC/data/VOCdevkit/', help='Root for VOC dataset.')
