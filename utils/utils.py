@@ -74,7 +74,7 @@ class VisdomLinePlotter(object):
                           update='append')
 
 
-def report_and_save(model, best_model, best_map, accuracy_history, output_dir, pseudolabel=False):
+def report_and_save(model, best_model, best_map, accuracy_history, output_dir, max_its=None, pseudolabel=False):
     # Average mAP over test points
     avg_map = []
     for acc_dict in accuracy_history:
@@ -84,7 +84,7 @@ def report_and_save(model, best_model, best_map, accuracy_history, output_dir, p
     std_map = np.std(avg_map)
     print('\nAveraged mAP over final 1000 iterations')
     print('AP = {:.4f} +/- {:.4f}'.format(avg_map, std_map))
-    print('\nFinal mAP after {} iterations'.format(args.max_its))
+    print('\nFinal mAP after {} iterations'.format(max_its))
     print('AP = {:.4f}'.format(final_map))
     print('\nBest mAP after final 1000 iterations')
     print('AP = {:.4f}'.format(best_map))

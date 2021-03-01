@@ -15,6 +15,16 @@ from utils.utils import report_and_save
 
 
 def base_trainer(model, args, output_dir, stylized_root, num_classes):
+    # check output directory
+    # load checkpoint
+    if args.checkpoint is not None:
+        if os.path.exists(args.checkpoint):
+            state_dict_to_load = torch.load(args.checkpoint, map_location='cpu')
+            model.load_state_dict(state_dict_to_load)
+            print('Loading model from {}'.format(args.checkpoint))
+        else:
+            raise OSError('Cannot find checkoint {}'.format(args.checkpoint))
+
     # set up dataloaders
     train_transform = StyleAugmentation(cfg['min_dim'], MEANS, args.photometric, random_sample=args.random_sample,
                                         expand=args.expand)
@@ -57,7 +67,7 @@ def base_trainer(model, args, output_dir, stylized_root, num_classes):
                                                                       val_data, args.max_its, output_dir,
                                                                       log_freq=args.log_freq, test_freq=args.test_freq,
                                                                       aux_criterion=style_criterion)
-        report_and_save(model, best_model, best_map, accuracy_history, output_dir, pseudolabel=False)
+        report_and_save(model, best_model, best_map, accuracy_history, output_dir, args.max_its, pseudolabel=False)
         return model
 
 
@@ -103,7 +113,6 @@ def train(model, criterion, optimizer, train_loader, val_dataset, max_iter, outp
                 loss_aux += aux_criterion(aux_ph, aux_st)
 
             loss = loss + loss_aux
-            print(loss.item())
 
             loss.backward()
             optimizer.step()

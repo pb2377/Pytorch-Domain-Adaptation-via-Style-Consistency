@@ -133,26 +133,9 @@ def main(args, cfg):
 
     if args.train:
         # Base training with VOC images and stylized versions, then pseudolabel and continue training.
-        # load checkpoint
-        if args.checkpoint is not None:
-            if os.path.exists(args.checkpoint):
-                state_dict_to_load = torch.load(args.checkpoint, map_location='cpu')
-                model.load_state_dict(state_dict_to_load)
-                print('Loading model from {}'.format(args.checkpoint))
-            else:
-                raise OSError('Cannot find checkoint {}'.format(args.checkpoint))
-
         print("\nTraining Base Model on Stylized Photos pairs....")
         if not args.pseudolabel:
-            trainer.base_trainer(model, args, output_dir, stylized_root, num_classes)
-
-        if args.checkpoint is not None:
-            # find assumed base weights...
-            guess_path = os.path.join(output_dir, 'weights', 'ssd300-final.pth')
-            print('No checkpoint given, loading checkpoint from {}'.format(guess_path))
-            assert os.path.exists(guess_path)
-            state_dict_to_load = torch.load(args.checkpoint, map_location='cpu')
-            model.load_state_dict(state_dict_to_load)
+            model = trainer.base_trainer(model, args, output_dir, stylized_root, num_classes)
 
         print("\nTraining with Joint Datasety of Pseudolabelled Art and Stylized Photos pairs....")
         model = train_pseudolabel.pseudolabel_trainer(model, args, output_dir, stylized_root, num_classes)

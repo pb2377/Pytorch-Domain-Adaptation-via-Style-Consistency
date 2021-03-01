@@ -17,22 +17,25 @@ from itertools import cycle
 
 
 def pseudolabel_trainer(model, args, output_dir, stylized_root, num_classes):
+    # check output directory
+    if args.checkpoint is not None:
+        # find assumed base weights...
+        guess_path = os.path.join(output_dir, 'weights', 'ssd300-final.pth')
+        print('No checkpoint given, loading checkpoint from {}'.format(guess_path))
+        assert os.path.exists(guess_path)
+        state_dict_to_load = torch.load(args.checkpoint, map_location='cpu')
+        model.load_state_dict(state_dict_to_load)
+
     print('Generating Pseudolabels...')
     dataset_mean = (104, 117, 123)
     pseudo_dataset = datasets.ArtDetection(root=args.style_root, transform=BaseTransform(300, dataset_mean),
                                            target_domain=args.target_domain, set_type='train',
                                            target_transform=VOCAnnotationTransform())
-
-    # pseudolabel dataset
-    model.eval()
-    if torch.cuda.is_available():
-        model.cuda()
     pslabels = pseudolabel.pseudolabel(model, pseudo_dataset, args.pthresh, overlap_thresh=args.overlap_thresh)
 
-    print("Saving JSON file...")
+    print("Saving pseudolabels JSON file to {}...".format(os.path.join(output_dir, 'pslabels.json')))
     with open(os.path.join(output_dir, 'pslabels.json'), 'w') as fp:
         json.dump(pslabels, fp)
-    print("...Complete")
 
     # Source, pseudolablled and validation datasets
     sc_loader, ps_loader, val_data = get_dataloaders(args)
@@ -63,9 +66,9 @@ def pseudolabel_trainer(model, args, output_dir, stylized_root, num_classes):
     args.max_its = 5000
     print("Setting max iterations to 5000 for pseudolabel training.")
     model, best_model, best_map, accuracy_history = train(model, ps_pair, sc_pair, optimizer, val_data, args.max_its,
-                                                          output_dir, og_freq=args.log_freq,  test_freq=args.test_freq,
+                                                          output_dir, log_freq=args.log_freq, test_freq=args.test_freq,
                                                           aux_criterion=style_criterion)
-    report_and_save(model, best_model, best_map, accuracy_history, output_dir, pseudolabel=True)
+    report_and_save(model, best_model, best_map, accuracy_history, output_dir,  args.max_its, pseudolabel=True)
     return model
 
 
