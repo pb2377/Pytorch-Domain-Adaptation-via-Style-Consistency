@@ -9,6 +9,19 @@ from PIL import Image
 from random import shuffle
 
 
+def check_preprocess(args, dataloader, stylized_root, pseudolabel=False):
+    if args.mode == 'fast':
+        if not args.no_prep:
+            preserve_colour = False
+            if args.preserve_colours == 'random':
+                preserve_colour = None
+            elif args.preserve_colours == 'preserve':
+                preserve_colour = True
+            preprocess(dataloader.dataset, args.target_domain, args.max_its, args.batch_size,
+                       args.style_root, stylized_root, set_type='train', preserve_colour=preserve_colour,
+                       pseudo=pseudolabel)
+
+
 def preprocess(base_dataset, target_domain, max_its, batch_size, style_root, stylized_root, set_type,
                preserve_colour=None, pseudo=False):
     # iterate until

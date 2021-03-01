@@ -1,12 +1,74 @@
 import os
 import torch
-import time
 import eval
 import copy
 from utils.utils import export_images
-from itertools import cycle
-import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
+from cfg import *
+from data import datasets, style_detection_collate, BaseTransform, VOCAnnotationTransform
+from models.layers.modules import MultiBoxLoss, FeatureConsistency
+from utils.augmentations import StyleAugmentation
+import torch.utils.data as data
+import preprocess
+import json
+from utils.utils import report_and_save
+
+
+def base_trainer(model, args, output_dir, stylized_root, num_classes):
+    # set up dataloaders
+    train_transform = StyleAugmentation(cfg['min_dim'], MEANS, args.photometric, random_sample=args.random_sample,
+                                        expand=args.expand)
+
+    train_dataset = datasets.StylizedVOCDetection(args.voc_root, args.target_domain,
+                                                  image_sets=[('2007', 'trainval'), ('2012', 'trainval')],
+                                                  transform=train_transform, dataset_name='VOC0712',
+                                                  stylized_root=stylized_root, mode=args.mode)
+
+    train_loader = data.DataLoader(train_dataset, args.batch_size,
+                                   num_workers=args.num_workers,
+                                   shuffle=True, collate_fn=style_detection_collate,
+                                   pin_memory=True)
+
+    # validation loader
+    val_data = datasets.ArtDetection(root=args.style_root, target_domain=args.target_domain, set_type='test',
+                                     transform=BaseTransform(300, MEANS))
+
+    # training sub functions
+    ssd_criterion = MultiBoxLoss(num_classes, 0.5, True, 0, True, 3, 0.5, False, cfg, torch.cuda.is_available(),
+                                 neg_thresh=0.)
+    style_criterion = FeatureConsistency(cosine=args.cosine)
+    optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum,
+                                weight_decay=args.weight_decay)
+
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    if not args.pseudolabel:
+        with open(os.path.join(output_dir, 'commandline_args.txt'), 'w') as f:
+            json.dump(args.__dict__, f, indent=2)
+
+        if not os.path.exists(os.path.join(output_dir, 'weights')):
+            os.makedirs(os.path.join(output_dir, 'weights'))
+
+        # Ensure dataset is fully preprocessed
+        if args.mode == 'fast':
+            if not args.no_prep:
+                preserve_colour = False
+                if args.preserve_colours == 'random':
+                    preserve_colour = None
+                elif args.preserve_colours == 'preserve':
+                    preserve_colour = True
+                print('Stylizing Dataset...')
+                preprocess.preprocess(train_dataset, args.target_domain, args.max_its, args.batch_size, args.style_root,
+                                      stylized_root, set_type='train', preserve_colour=preserve_colour,
+                                      pseudo=args.pseudolabel)
+
+        model, best_model, best_map, accuracy_history = train(model, ssd_criterion, optimizer, train_loader,
+                                                                      val_data, args.max_its, output_dir,
+                                                                      log_freq=args.log_freq, test_freq=args.test_freq,
+                                                                      aux_criterion=style_criterion)
+        report_and_save(model, best_model, best_map, accuracy_history, output_dir, pseudolabel=False)
+        return model
 
 
 def train(model, criterion, optimizer, train_loader, val_dataset, max_iter, output_path, log_freq=1000, test_freq=100,
@@ -21,7 +83,6 @@ def train(model, criterion, optimizer, train_loader, val_dataset, max_iter, outp
     writer = SummaryWriter(log_dir=output_path)
     writer.add_scalar("Test_mAP", 0., 0)
 
-    print("Training Classifier...")
     while iteration <= max_iter:
         for images, style_ims, targets in train_loader:
             optimizer.zero_grad()
@@ -92,133 +153,6 @@ def train(model, criterion, optimizer, train_loader, val_dataset, max_iter, outp
             iteration += 1
         epoch += 1
 
-    return model, best_model, best_map, accuracy_history
-
-
-def pseudolabel_train(model, ps_pair, sc_pair, optimizer, val_dataset, max_iter, output_path,
-                      log_freq=1000, test_freq=100, aux_criterion=None):
-    """
-    As standard trainer but with mixed dataset of Pseudolabels and Labelled VOC data, and train much like "frustratingly
-    easy few shot learning" and evaluate on batches of the source and novel (pseudo) examples.
-
-    Also include the addition to only use the labelled examples to generate hard negatives from the synthesized artwork.
-    :return:
-    """
-    ps_loader, criterion_ps = ps_pair  # pseudolabel dataloader and criterion
-    sc_loader, criterion_sc = sc_pair  # souerce dataloader and criterion
-    del ps_pair, sc_pair
-    iteration = 0
-    accuracy_history = []
-    best_map = 0.0
-    best_model = copy.deepcopy(model.state_dict())
-
-    # Tensorboard writer
-    writer = SummaryWriter(log_dir=os.path.join(output_path, 'pseudolabel'))
-    writer.add_scalar("Test_mAP", 0., 0)
-
-    print("Training Classifier...")
-    while iteration <= max_iter:
-        for ps_batch, sc_batch in zip(cycle(ps_loader), sc_loader):
-            ps_images, ps_style_ims, ps_targets = ps_batch
-            sc_images, sc_style_ims, sc_targets = sc_batch
-
-            optimizer.zero_grad()
-
-            if iteration > max_iter:
-                break
-
-            # combine into single batch
-            images_batch = torch.cat((ps_images, ps_style_ims, sc_images, sc_style_ims), 0)
-
-            if torch.cuda.is_available():
-                images_batch = images_batch.cuda()
-                ps_targets = [ann.cuda() for ann in ps_targets]
-                sc_targets = [ann.cuda() for ann in sc_targets]
-
-            # Pass through model
-            out, aux_outputs = model(images_batch)
-
-            # Split outputs back to pseudolabel and source
-            ps_out = []
-            sc_out = []
-            for output in out[:-1]:
-                ps_out.append(output[:ps_images.size(0)*2])
-                sc_out.append(output[ps_images.size(0)*2:])
-            ps_out.append(out[-1])
-            sc_out.append(out[-1])
-
-            # Pseudolabel Example Losses
-            ps_targets = ps_targets + ps_targets
-            loss_l_ps, loss_c_ps = criterion_ps(ps_out, ps_targets)
-            loss_ps = loss_l_ps + loss_c_ps
-            loss_aux_ps = 0.
-            # First half of batch in aux outputs are pseudolabel items
-            sz_1 = ps_images.size(0)
-            sz_2 = sz_1 * 2
-            for idx in range(len(aux_outputs)):
-                aux_base = aux_outputs[idx][:sz_1, :, :, :]
-                aux_sty = aux_outputs[idx][sz_1:sz_2, :, :, :]
-                loss_aux_ps += aux_criterion(aux_base, aux_sty)
-
-            # Source Example Losses
-            sc_targets = sc_targets + sc_targets
-            loss_l_sc, loss_c_sc = criterion_sc(sc_out, sc_targets)
-            loss_sc = loss_l_sc + loss_c_sc
-
-            loss_aux_sc = 0.
-            # Second half of batch in aux outputs are source items
-            sz_1 = sz_2
-            sz_2 = sz_1 + sc_images.size(0)
-            for idx in range(len(aux_outputs)):
-                # l1, l2 = aux_criterion(aux_outputs_ph[idx], aux_outputs_st[idx])
-                aux_base = aux_outputs[idx][sz_1:sz_2, :, :, :]
-                aux_sty = aux_outputs[idx][sz_2:, :, :, :]
-                loss_aux_sc += aux_criterion(aux_base, aux_sty)
-            loss_sc += loss_aux_sc
-
-            # Combine losses
-            # print('{:.3f} -- {:.3f} -- {:.3f} -- {:.3f}'.format(loss_ps, loss_aux_ps, loss_sc, loss_aux_sc))
-            loss = loss_ps + loss_sc + loss_aux_ps + loss_aux_sc
-            loss /= 2
-            loss.backward()
-            optimizer.step()
-
-            if iteration % log_freq == 0:
-                writer.add_scalar("Loss_PS", loss_ps.item(), iteration)
-                writer.add_scalar("Conf_loss_PS", loss_c_ps.item(), iteration)
-                writer.add_scalar("Loc_loss_PS", loss_l_ps.item(), iteration)
-                writer.add_scalar("Style_loss", loss_aux_ps, iteration)
-
-            if iteration != 0 and iteration % 5000 == 0:
-                print('Saving state, iter:', iteration)
-                save_path = os.path.join(output_path, 'weights', 'iteraton-{}.pth'.format(iteration))
-                torch.save(model.state_dict(), save_path)
-
-            if iteration >= max_iter - (10*test_freq):
-                if iteration == max_iter or iteration % test_freq == 0:
-                    model.eval()
-                    eval.FULL_REPORT = False
-                    accuracy_history.append(eval.evaluate(model, val_dataset,
-                                                          os.path.join(output_path, 'iteration-{}'.format(iteration))))
-                    model.train()
-
-                    writer.add_scalar("Test_mAP", accuracy_history[-1]['mAP'], iteration)
-                    # keep best  model
-                    if accuracy_history[-1]['mAP'] > best_map:
-                        best_map = accuracy_history[-1]['mAP']
-                        best_model = copy.deepcopy(model.state_dict())
-
-                    # summary writer
-            else:
-                if not iteration % 1000 and iteration > 0:
-                    model.eval()
-                    eval.FULL_REPORT = False
-                    acc = eval.evaluate(model, val_dataset, os.path.join(output_path, 'tempdets'.format(iteration)))
-                    writer.add_scalar("Test_mAP", acc['mAP'], iteration)
-                    model.train()
-                    # summary writer
-
-            iteration += 1
     return model, best_model, best_map, accuracy_history
 
 

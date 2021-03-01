@@ -166,7 +166,6 @@ def do_python_eval(output_dir, annopath, imgsetpath, target_domain, use_07=True,
         print('Results computed with the **unofficial** Python eval code.')
         print('Results should be very close to the official MATLAB eval code.')
         print('--------------------------------------------------------------')
-    else:
         print('Mean AP {:.4f} -- Outputs saved to {}'.format(np.mean(aps), output_dir))
 
     accuracy_dict['mAP'] = np.mean(aps)

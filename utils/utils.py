@@ -1,7 +1,10 @@
+import os
+import pickle
 from torchvision import transforms
 from PIL import Image, ImageDraw
 from visdom import Visdom
 import numpy as np
+import torch
 
 
 labelmap = (  # always index 0
@@ -68,4 +71,34 @@ class VisdomLinePlotter(object):
             ))
         else:
             self.viz.line(X=np.array([x]), Y=np.array([y]), env=self.env, win=self.plots[var_name], name=split_name,
-                          update = 'append')
+                          update='append')
+
+
+def report_and_save(model, best_model, best_map, accuracy_history, output_dir, pseudolabel=False):
+    # Average mAP over test points
+    avg_map = []
+    for acc_dict in accuracy_history:
+        avg_map.append(acc_dict['mAP'])
+    final_map = avg_map[-1]
+    avg_map = np.mean(avg_map)
+    std_map = np.std(avg_map)
+    print('\nAveraged mAP over final 1000 iterations')
+    print('AP = {:.4f} +/- {:.4f}'.format(avg_map, std_map))
+    print('\nFinal mAP after {} iterations'.format(args.max_its))
+    print('AP = {:.4f}'.format(final_map))
+    print('\nBest mAP after final 1000 iterations')
+    print('AP = {:.4f}'.format(best_map))
+
+    # Save All Outputs
+    # save final model
+    torch.save(model.state_dict(), os.path.join(output_dir, 'weights',
+                                                'ssd300-{}final.pth'.format('ps-' if pseudolabel else '')))
+
+    # save best model
+    torch.save(best_model, os.path.join(output_dir, 'weights',
+                                        'ssd300-{}best.pth'.format('ps-' if pseudolabel else '')))
+
+    # save accuracy history
+    output_file = os.path.join(output_dir, 'accuracy_hist.pkl')
+    with open(output_file, 'wb') as f:
+        pickle.dump(accuracy_history, f)

@@ -6,20 +6,19 @@ from data import datasets, style_detection_collate, BaseTransform, VOCAnnotation
 from models.layers.modules import MultiBoxLoss, FeatureConsistency
 import torch.utils.data as data
 import trainer
+from cfg import cfg
 from utils.augmentations import StyleAugmentation
-import numpy as np
 import pickle
 import json
 import preprocess
-import glob
-import pseudolabel
+import train_pseudolabel
 import eval
 
 parser = argparse.ArgumentParser(description='Single Shot MultiBox Detector Training With Pytorch')
 # add args
 parser.add_argument('--train', default=False, action='store_true', help='Flag to train model')
 parser.add_argument('--pseudolabel', '--ps', default=False, action='store_true',
-                    help='Flag to generate and train with pseudolabel dataset.')
+                    help='Flag to generate and train with pseudolabels from base model at --checkpoint.')
 parser.add_argument('--eval', default=False, action='store_true', help='Flag to evaluate model')
 parser.add_argument('--test', default=False, action='store_true', help='Flag to test model i.e. label and visualize '
                                                                        'target dataset')
@@ -134,7 +133,6 @@ def main(args, cfg):
 
     if args.train:
         # Base training with VOC images and stylized versions, then pseudolabel and continue training.
-
         # load checkpoint
         if args.checkpoint is not None:
             if os.path.exists(args.checkpoint):
@@ -144,64 +142,9 @@ def main(args, cfg):
             else:
                 raise OSError('Cannot find checkoint {}'.format(args.checkpoint))
 
-        # set up dataloaders
-        train_transform = StyleAugmentation(cfg['min_dim'], MEANS, args.photometric, random_sample=args.random_sample,
-                                            expand=args.expand)
-
-        train_dataset = datasets.StylizedVOCDetection(args.voc_root, args.target_domain,
-                                                      image_sets=[('2007', 'trainval'), ('2012', 'trainval')],
-                                                      transform=train_transform, dataset_name='VOC0712',
-                                                      stylized_root=stylized_root, mode=args.mode)
-
-        train_loader = data.DataLoader(train_dataset, args.batch_size,
-                                       num_workers=args.num_workers,
-                                       shuffle=True, collate_fn=style_detection_collate,
-                                       pin_memory=True)
-
-        # validation loader
-        val_data = datasets.ArtDetection(root=args.style_root, target_domain=args.target_domain, set_type='test',
-                                         transform=BaseTransform(300, MEANS))
-
-        # training sub functions
-        ssd_criterion = MultiBoxLoss(num_classes, 0.5, True, 0, True, 3, 0.5, False, cfg, torch.cuda.is_available(),
-                                 neg_thresh=0.)
-        style_criterion = FeatureConsistency(cosine=args.cosine)
-        optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum,
-                                    weight_decay=args.weight_decay)
-
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-
+        print("Training Base Model on Stylized Photos pairs....")
         if not args.pseudolabel:
-            with open(os.path.join(output_dir, 'commandline_args.txt'), 'w') as f:
-                json.dump(args.__dict__, f, indent=2)
-
-            if not os.path.exists(os.path.join(output_dir, 'weights')):
-                os.makedirs(os.path.join(output_dir, 'weights'))
-
-            # Ensure dataset is fully preprocessed
-            if args.mode == 'fast':
-                if not args.no_prep:
-                    preserve_colour = False
-                    if args.preserve_colours == 'random':
-                        preserve_colour = None
-                    elif args.preserve_colours == 'preserve':
-                        preserve_colour = True
-                    print('Stylizing Dataset...')
-                    preprocess.preprocess(train_dataset, args.target_domain, args.max_its, args.batch_size, args.style_root,
-                                          stylized_root, set_type='train', preserve_colour=preserve_colour,
-                                          pseudo=args.pseudolabel)
-
-            model, best_model, best_map, accuracy_history = trainer.train(model, ssd_criterion, optimizer, train_loader,
-                                                                          val_data, args.max_its, output_dir,
-                                                                          log_freq=args.log_freq, test_freq=args.test_freq,
-                                                                          aux_criterion=style_criterion)
-            report_and_save(model, best_model, best_map, accuracy_history, output_dir, pseudolabel=False)
-
-        print('\nBegin Pseudolabel Training...')
-        # copy base model to pseudolabel_dir
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+            trainer.base_trainer(model, args, output_dir, stylized_root, num_classes)
 
         if args.checkpoint is not None:
             # find assumed base weights...
@@ -211,78 +154,8 @@ def main(args, cfg):
             state_dict_to_load = torch.load(args.checkpoint, map_location='cpu')
             model.load_state_dict(state_dict_to_load)
 
-        if args.generate_ps:
-            print('Generating Pseudolabels...')
-            dataset_mean = (104, 117, 123)
-            pseudo_dataset = datasets.ArtDetection(root=args.style_root, transform=BaseTransform(300, dataset_mean),
-                                                   target_domain=args.target_domain, set_type='train',
-                                                   target_transform=VOCAnnotationTransform())
-
-            # pseudolabel dataset
-            model.eval()
-            if torch.cuda.is_available():
-                model.cuda()
-            pslabels = pseudolabel.pseudolabel(model, pseudo_dataset, args.pthresh, overlap_thresh=args.overlap_thresh)
-
-            print("Saving JSON file...")
-            with open(os.path.join(output_dir, 'pslabels.json'), 'w') as fp:
-                json.dump(pslabels, fp)
-            print("...Complete")
-        else:
-            # get pre-generated pseudolabels
-            pseudolabels_file = os.path.join(output_dir, 'pslabels.json')
-            assert os.path.exists(pseudolabels_file)
-            print('Loading pseudolabels from {}'.format(pseudolabels_file))
-            with open(pseudolabels_file) as json_file:
-                pslabels = json.load(json_file)
-
-            if not args.generate_ps:
-                n_labels = 0
-                for k, v in pslabels.items():
-                    n_labels += len(v)
-                print("--- {} Detections Pseudolabeled in {} Images ---".format(n_labels, len(pslabels.keys())))
-
-        # pseudolabel datasets
-        ps_dataset = datasets.PseudolabelDataset(pslabels, args.style_root,
-                                                    args.target_domain, transform=train_transform,
-                                                    stylized_root=stylized_root, mode=args.mode)
-
-        ps_loader = data.DataLoader(ps_dataset, args.batch_size,
-                                       num_workers=args.num_workers,
-                                       shuffle=True, collate_fn=style_detection_collate,
-                                       pin_memory=True)
-
-        # train
-        neg_thresh = args.nthresh
-        ps_criterion = MultiBoxLoss(num_classes, 0.5, True, 0, True, 3, 0.5, False, cfg, torch.cuda.is_available(),
-                                 neg_thresh=neg_thresh)
-
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-
-        # Ensure dataset is fully preprocessed
-        if args.mode == 'fast':
-            if not args.no_prep:
-                preserve_colour = False
-                if args.preserve_colours == 'random':
-                    preserve_colour = None
-                elif args.preserve_colours == 'preserve':
-                    preserve_colour = True
-                preprocess.preprocess(train_dataset, args.target_domain, args.max_its, args.batch_size,
-                                      args.style_root, stylized_root, set_type='train', preserve_colour=preserve_colour,
-                                      pseudo=args.pseudolabel)
-
-        # raise NotImplementedError
-        args.max_its = 5000
-        print("Setting max iterations to 5000 for pseudolabel training.")
-        ps_pair = (ps_loader, ps_criterion)  # dataloader and ssd criterion for pseudolabelled image pairs
-        sc_pair = (train_loader, ssd_criterion)  # dataloader and ssd criterion for source image pairs
-        model, best_model, best_map, accuracy_history = trainer.pseudolabel_train(model, ps_pair, sc_pair, optimizer,
-                                                                                  val_data, args.max_its, output_dir,
-                                                                                  log_freq=args.log_freq,
-                                                                                  test_freq=args.test_freq,
-                                                                                  aux_criterion=style_criterion)
-        report_and_save(model, best_model, best_map, accuracy_history, output_dir, pseudolabel=True)
+        print("Training with Joint Datasety of Pseudolabelled Art and Stylized Photos pairs....")
+        model = train_pseudolabel.pseudolabel_trainer(model, args, output_dir, stylized_root, num_classes)
 
     elif args.eval:
         # set up model
@@ -322,57 +195,6 @@ def main(args, cfg):
         with open(output_file, 'wb') as f:
             pickle.dump(accuracy_dict, f)
 
-
-def report_and_save(model, best_model, best_map, accuracy_history, output_dir, pseudolabel=False):
-    # Average mAP over test points
-    avg_map = []
-    for acc_dict in accuracy_history:
-        avg_map.append(acc_dict['mAP'])
-    final_map = avg_map[-1]
-    avg_map = np.mean(avg_map)
-    std_map = np.std(avg_map)
-    print('\nAveraged mAP over final 1000 iterations')
-    print('AP = {:.4f} +/- {:.4f}'.format(avg_map, std_map))
-    print('\nFinal mAP after {} iterations'.format(args.max_its))
-    print('AP = {:.4f}'.format(final_map))
-    print('\nBest mAP after final 1000 iterations')
-    print('AP = {:.4f}'.format(best_map))
-
-    # Save All Outputs
-    # save final model
-    torch.save(model.state_dict(), os.path.join(output_dir, 'weights',
-                                                'ssd300-{}final.pth'.format('ps-' if pseudolabel else '')))
-
-    # save best model
-    torch.save(best_model, os.path.join(output_dir, 'weights',
-                                        'ssd300-{}best.pth'.format('ps-' if pseudolabel else '')))
-
-    # save accuracy history
-    output_file = os.path.join(output_dir, 'accuracy_hist.pkl')
-    with open(output_file, 'wb') as f:
-        pickle.dump(accuracy_history, f)
-
-
-# for making bounding boxes pretty
-COLORS = ((255, 0, 0, 128), (0, 255, 0, 128), (0, 0, 255, 128),
-          (0, 255, 255, 128), (255, 0, 255, 128), (255, 255, 0, 128))
-
-MEANS = (104, 117, 123)
-
-cfg = {
-    'num_classes': 21,
-    'lr_steps': (80000, 100000, 120000),
-    'max_iter': 120000,
-    'feature_maps': [38, 19, 10, 5, 3, 1],
-    'min_dim': 300,
-    'steps': [8, 16, 32, 64, 100, 300],
-    'min_sizes': [30, 60, 111, 162, 213, 264],
-    'max_sizes': [60, 111, 162, 213, 264, 315],
-    'aspect_ratios': [[2], [2, 3], [2, 3], [2, 3], [2], [2]],
-    'variance': [0.1, 0.2],
-    'clip': True,
-    'name': 'VOC',
-}
 
 if __name__ == '__main__':
     main(args, cfg)
