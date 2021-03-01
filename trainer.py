@@ -85,6 +85,7 @@ def train(model, criterion, optimizer, train_loader, val_dataset, max_iter, outp
 
     if torch.cuda.is_available():
         model = model.cuda()
+    max_eps = (max_iter / len(train_loader)) + 1
     while iteration <= max_iter:
         for images, style_ims, targets in train_loader:
             optimizer.zero_grad()
@@ -154,6 +155,7 @@ def train(model, criterion, optimizer, train_loader, val_dataset, max_iter, outp
 
             iteration += 1
         epoch += 1
+        print('{}/{} Epochs Completed'.format(epoch, max_eps))
 
     return model, best_model, best_map, accuracy_history
 

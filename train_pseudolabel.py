@@ -126,6 +126,9 @@ def train(model, ps_pair, sc_pair, optimizer, val_dataset, max_iter, output_path
     model.train()
     if torch.cuda.is_available():
         model = model.cuda()
+
+    epoch = 0
+    max_eps = (max_iter / len(ps_loader)) + 1
     while iteration <= max_iter:
         for ps_batch, sc_batch in zip(cycle(ps_loader), sc_loader):
             ps_images, ps_style_ims, ps_targets = ps_batch
@@ -228,4 +231,7 @@ def train(model, ps_pair, sc_pair, optimizer, val_dataset, max_iter, output_path
                     # summary writer
 
             iteration += 1
+        epoch += 1
+        print('{}/{} Epochs Completed'.format(epoch, max_eps))
+
     return model, best_model, best_map, accuracy_history
