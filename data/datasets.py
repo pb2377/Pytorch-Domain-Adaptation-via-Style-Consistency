@@ -430,7 +430,7 @@ class PseudolabelDataset(data.Dataset):
 
     def __getitem__(self, index):
         im, style_im, gt, h, w = self.pull_item(index)
-        return im, style_im, None, gt
+        return im, style_im, gt
 
     def __len__(self):
         return len(self.ids)
