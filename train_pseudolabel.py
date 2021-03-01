@@ -38,7 +38,7 @@ def pseudolabel_trainer(model, args, output_dir, stylized_root, num_classes):
         json.dump(pslabels, fp)
 
     # Source, pseudolablled and validation datasets
-    sc_loader, ps_loader, val_data = get_dataloaders(args)
+    sc_loader, ps_loader, val_data = get_dataloaders(args, stylized_root, pslabels)
 
     # training criterion for source data
     ssd_criterion = MultiBoxLoss(num_classes, 0.5, True, 0, True, 3, 0.5, False, cfg, torch.cuda.is_available(),
