@@ -8,7 +8,9 @@ Baseline Models - Recognition performance given the base SSD model pretrained on
 Main Models - Performance of their full model (robust pseudolabelling + style consistency) from the paper and this pytorch implementation
 
 
-
+  
+  
+  
 Pascal VOC -> Clipart:
 |   | aero | bike | bird | boat | bttle | bus | car | cat | chair | cow | table | dog | horse | mbike | person | plant | sheep | sofa | train | tv | mAP |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
