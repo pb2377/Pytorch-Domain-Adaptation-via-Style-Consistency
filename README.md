@@ -4,7 +4,43 @@ My PyTorch implementation of Domain Adaptation for Object Detection via Style Co
 
 
 Results:
+Baseline - Recognition performance given the base SSD model pretrained on Pascal VOC
+Paper - Performance of their full model (robust pseudolabelling + style consistency)
+Pytorch - This pytorch implementation of their full model
 
-| BLANK | aero | bike | bird | boat | bttle | bus | car | cat | chair | cow | table | dog | horse | mbike | person | plant | sheep | sofa | train | tv | mAP |
+
+Pascal VOC -> Clipart:
+|   | aero | bike | bird | boat | bttle | bus | car | cat | chair | cow | table | dog | horse | mbike | person | plant | sheep | sofa | train | tv | mAP |
 | :---: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
-| Baseline | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| Baseline (Paper) | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| :---: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| Baseline (Pytorch) | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| :---: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| Paper | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| :---: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| Pttorhc | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 44.9 |
+
+
+Pascal VOC -> Watercolor
+| BLANK | bike | bird | car | cat | dog | person | mAP |
+| :---: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| Baseline (Paper) | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
+| :---: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | 
+| Baseline (Pytorch) | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
+| Main Models|
+| :---: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | 
+| Paper| 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
+| :---: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | 
+| Pytorch| 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
+
+Pascal VOC -> Comic
+| BLANK | bike | bird | car | cat | dog | person | mAP |
+| :---: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| Baseline (Paper) | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
+| :---: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | 
+| Baseline (Pytorch) | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
+| Main Models|
+| :---: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | 
+| Paper| 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
+| :---: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | 
+| Pytorch| 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
