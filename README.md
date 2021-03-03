@@ -11,36 +11,28 @@ Pytorch - This pytorch implementation of their full model
 
 Pascal VOC -> Clipart:
 |   | aero | bike | bird | boat | bttle | bus | car | cat | chair | cow | table | dog | horse | mbike | person | plant | sheep | sofa | train | tv | mAP |
-| :---: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| Base Models |
 | Baseline (Paper) | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| :---: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
 | Baseline (Pytorch) | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| :---: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| Main Models |
 | Paper | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| :---: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
 | Pttorhc | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 44.9 |
 
 
 Pascal VOC -> Watercolor
-| BLANK | bike | bird | car | cat | dog | person | mAP |
-| :---: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+|   | bike | bird | car | cat | dog | person | mAP |
+| Base Models |
 | Baseline (Paper) | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
-| :---: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | 
 | Baseline (Pytorch) | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
 | Main Models|
-| :---: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | 
 | Paper| 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
-| :---: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | 
 | Pytorch| 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
 
 Pascal VOC -> Comic
-| BLANK | bike | bird | car | cat | dog | person | mAP |
-| :---: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+|   | bike | bird | car | cat | dog | person | mAP |
+| Base Models |
 | Baseline (Paper) | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
-| :---: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | 
 | Baseline (Pytorch) | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
 | Main Models|
-| :---: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | 
 | Paper| 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
-| :---: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | 
 | Pytorch| 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
