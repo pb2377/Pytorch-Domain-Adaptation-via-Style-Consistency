@@ -39,7 +39,7 @@ def pseudolabel_trainer(model, args, output_dir, stylized_root, num_classes):
             json.dump(pslabels, fp)
     else:
         with open(os.path.join(output_dir, 'pslabels.json')) as json_file:
-            ps_labels = json.load(json_file)
+            pslabels = json.load(json_file)
 
     # Source, pseudolablled and validation datasets
     sc_loader, ps_loader, val_data = get_dataloaders(args, stylized_root, pslabels)
