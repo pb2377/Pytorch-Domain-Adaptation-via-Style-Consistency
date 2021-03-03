@@ -26,16 +26,20 @@ def pseudolabel_trainer(model, args, output_dir, stylized_root, num_classes):
         state_dict_to_load = torch.load(guess_path, map_location='cpu')
         model.load_state_dict(state_dict_to_load)
 
-    print('Generating Pseudolabels...')
-    dataset_mean = (104, 117, 123)
-    pseudo_dataset = datasets.ArtDetection(root=args.style_root, transform=BaseTransform(300, dataset_mean),
-                                           target_domain=args.target_domain, set_type='train',
-                                           target_transform=VOCAnnotationTransform())
-    pslabels = pseudolabel.pseudolabel(model, pseudo_dataset, args.pthresh, overlap_thresh=args.overlap_thresh)
+    if args.generate_ps:
+        print('Generating Pseudolabels...')
+        dataset_mean = (104, 117, 123)
+        pseudo_dataset = datasets.ArtDetection(root=args.style_root, transform=BaseTransform(300, dataset_mean),
+                                               target_domain=args.target_domain, set_type='train',
+                                               target_transform=VOCAnnotationTransform())
+        pslabels = pseudolabel.pseudolabel(model, pseudo_dataset, args.pthresh, overlap_thresh=args.overlap_thresh)
 
-    print("Saving pseudolabels JSON file to {}...".format(os.path.join(output_dir, 'pslabels.json')))
-    with open(os.path.join(output_dir, 'pslabels.json'), 'w') as fp:
-        json.dump(pslabels, fp)
+        print("Saving pseudolabels JSON file to {}...".format(os.path.join(output_dir, 'pslabels.json')))
+        with open(os.path.join(output_dir, 'pslabels.json'), 'w') as fp:
+            json.dump(pslabels, fp)
+    else:
+        with open(os.path.join(output_dir, 'pslabels.json')) as json_file:
+            ps_labels = json.load(json_file)
 
     # Source, pseudolablled and validation datasets
     sc_loader, ps_loader, val_data = get_dataloaders(args, stylized_root, pslabels)

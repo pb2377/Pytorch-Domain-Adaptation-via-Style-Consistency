@@ -74,6 +74,8 @@ parser.add_argument('--expand', default=1, type=int,
 parser.add_argument('--basic_trans', default=False, action='store_true',
                     help='Use a basic transform of just loading images and randomly flipping and normalizing. '
                          'No randomly samplingor expanding')
+parser.add_argument('--generate_ps', default=1, choices=[0, 1], type=int,
+                    help='Generate pseudolabels or just existing ones in output_dir/ps_labels.json')
 args = parser.parse_args()
 
 
