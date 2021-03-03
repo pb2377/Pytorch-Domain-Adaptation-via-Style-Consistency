@@ -26,7 +26,7 @@ Main Models - Performance of their full model from the paper and this pytorch im
 
 
 
-### Pascal VOC -> Watercolor
+### Pascal VOC -> Watercolor:
 |   | bike | bird | car | cat | dog | person | mAP |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | Baseline Models |
@@ -39,7 +39,7 @@ Main Models - Performance of their full model from the paper and this pytorch im
 | Pytorch ST+RPL | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
 
 
-### Pascal VOC -> Comic
+### Pascal VOC -> Comic:
 |   | bike | bird | car | cat | dog | person | mAP |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | Baseline Models |
