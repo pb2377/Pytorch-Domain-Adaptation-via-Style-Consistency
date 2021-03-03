@@ -18,12 +18,12 @@ from itertools import cycle
 
 def pseudolabel_trainer(model, args, output_dir, stylized_root, num_classes):
     # check output directory
-    if args.checkpoint is not None:
+    if args.checkpoint is None and args.pseudolabel:
         # find assumed base weights...
         guess_path = os.path.join(output_dir, 'weights', 'ssd300-final.pth')
         print('No checkpoint given, loading checkpoint from {}'.format(guess_path))
         assert os.path.exists(guess_path)
-        state_dict_to_load = torch.load(args.checkpoint, map_location='cpu')
+        state_dict_to_load = torch.load(guess_path, map_location='cpu')
         model.load_state_dict(state_dict_to_load)
 
     print('Generating Pseudolabels...')
@@ -199,7 +199,7 @@ def train(model, ps_pair, sc_pair, optimizer, val_dataset, max_iter, output_path
                 writer.add_scalar("Loss_PS", loss_ps.item(), iteration)
                 writer.add_scalar("Conf_loss_PS", loss_c_ps.item(), iteration)
                 writer.add_scalar("Loc_loss_PS", loss_l_ps.item(), iteration)
-                writer.add_scalar("Style_loss", loss_aux_ps.cpu().numpy().float(), iteration)
+                writer.add_scalar("Style_loss", loss_aux_ps, iteration)
 
             if iteration != 0 and iteration % 5000 == 0:
                 print('Saving state, iter:', iteration)

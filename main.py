@@ -133,9 +133,14 @@ def main(args, cfg):
 
     if args.train:
         # Base training with VOC images and stylized versions, then pseudolabel and continue training.
+        if args.checkpoint is not None:
+            assert os.path.exists(args.checkpoint)
+            model.load_state_dict(torch.load(args.checkpoint, map_location='cpu'))
         print("\nTraining Base Model on Stylized Photos pairs....")
         if not args.pseudolabel:
             model = trainer.base_trainer(model, args, output_dir, stylized_root, num_classes)
+
+            # save model.
 
         print("\nTraining with Joint Datasety of Pseudolabelled Art and Stylized Photos pairs....")
         model = train_pseudolabel.pseudolabel_trainer(model, args, output_dir, stylized_root, num_classes)

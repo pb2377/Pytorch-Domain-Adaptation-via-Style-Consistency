@@ -53,22 +53,21 @@ def base_trainer(model, args, output_dir, stylized_root, num_classes):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    if not args.pseudolabel:
-        with open(os.path.join(output_dir, 'commandline_args.txt'), 'w') as f:
-            json.dump(args.__dict__, f, indent=2)
+    with open(os.path.join(output_dir, 'commandline_args.txt'), 'w') as f:
+        json.dump(args.__dict__, f, indent=2)
 
-        if not os.path.exists(os.path.join(output_dir, 'weights')):
-            os.makedirs(os.path.join(output_dir, 'weights'))
+    if not os.path.exists(os.path.join(output_dir, 'weights')):
+        os.makedirs(os.path.join(output_dir, 'weights'))
 
-        # Ensure dataset is fully preprocessed
-        preprocess.check_preprocess(args, train_loader, stylized_root, pseudolabel=False)
+    # Ensure dataset is fully preprocessed
+    preprocess.check_preprocess(args, train_loader, stylized_root, pseudolabel=False)
 
-        model, best_model, best_map, accuracy_history = train(model, ssd_criterion, optimizer, train_loader,
-                                                                      val_data, args.max_its, output_dir,
-                                                                      log_freq=args.log_freq, test_freq=args.test_freq,
-                                                                      aux_criterion=style_criterion)
-        report_and_save(model, best_model, best_map, accuracy_history, output_dir, args.max_its, pseudolabel=False)
-        return model
+    model, best_model, best_map, accuracy_history = train(model, ssd_criterion, optimizer, train_loader,
+                                                                  val_data, args.max_its, output_dir,
+                                                                  log_freq=args.log_freq, test_freq=args.test_freq,
+                                                                  aux_criterion=style_criterion)
+    report_and_save(model, best_model, best_map, accuracy_history, output_dir, args.max_its, pseudolabel=False)
+    return model
 
 
 def train(model, criterion, optimizer, train_loader, val_dataset, max_iter, output_path, log_freq=100, test_freq=100,
