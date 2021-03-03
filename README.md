@@ -20,7 +20,7 @@ Pascal VOC -> Clipart:
 
 Pascal VOC -> Watercolor
 |   | bike | bird | car | cat | dog | person | mAP |
-| Base Models |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | Baseline (Paper) | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
 | Baseline (Pytorch) | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
 | Main Models|
@@ -29,7 +29,7 @@ Pascal VOC -> Watercolor
 
 Pascal VOC -> Comic
 |   | bike | bird | car | cat | dog | person | mAP |
-| Base Models |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | Baseline (Paper) | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
 | Baseline (Pytorch) | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
 | Main Models|
