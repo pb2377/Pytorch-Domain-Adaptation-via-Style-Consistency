@@ -8,7 +8,7 @@ Baseline Models - Recognition performance given the base SSD model pretrained on
 Main Models - Performance of their full model from the paper and this pytorch implementation (ST indicates sytle transfer consistency and RPL indicated robust pseudolabelling)
 
 #### TBD:
-* add in full class breakdown of results for pytorch implementation (currently only listng my mAP)
+* Write in full class breakdown of results for pytorch implementation (currently only listng my mAP)
 * Implement with Faster RCNN
   
  
@@ -17,12 +17,12 @@ Main Models - Performance of their full model from the paper and this pytorch im
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | Baseline Models |
 | Paper | 19.8 | 49.5 | 20.1 | 23.0 | 11.3 | 38.6 | 34.2 | 2.5 | 39.1 | 21.6 | 27.3 | 10.8 | 32.5 | 54.1 | 45.3 | 31.2 | 19.0 | 19.5 | 19.1 | 17.9 | 26.8 |
-| Pytorch | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| Pytorch |  0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | Main Models|
 | Paper ST | 35.0 | 57.3 | 24.7 | 41.9 | 28.0 | 56.8 | 49.1 | 9.9 | 49.3 | 55.6 | 44.0 | 16.5 | 42.3 | 83.1 | 65.0 | 42.8 | 17.7 | 43.9 | 42.0 | 52.6 | 42.9 |
 | Paper ST+RPL | 36.9 | 55.1 | 26.4 | 42.7 | 23.6 | 64.4 | 52.1 | 10.1 | 50.9 | 57.2 | 48.2 | 16.2 | 45.9 | 83.7 | 69.5 | 41.5 | 21.6 | 46.1 | 48.3 | 55.7 | 44.8 |
-| Pytorch ST | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 43.2 |
-| Pytorch ST+RPL | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 44.9 |
+| Pytorch ST | 23.5 | 63.2 | 25.5 | 45.6 | 35.2 | 60.6 | 52.1 | 8.2 | 52.1 | 56.5 | 53.4 | 14.7 | 35.0 | 65.4 | 66.3 | 48.4 | 20.8 | 33.3 | 44.1 | 52.7| 42.8 |
+| Pytorch ST+RPL | 25.3 | 68.8 | 25.8 | 43.8 | 30.9 | 53.9 | 58.6 | 9.0 | 53.2 | 61.4 | 56.3 | 17.2 | 39.9| 76.3 | 71.6 | 49.2 | 25.1 | 32.9 | 47.5 | 55.2 | 45.1 |
 
 
 
