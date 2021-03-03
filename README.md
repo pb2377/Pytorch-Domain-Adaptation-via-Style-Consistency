@@ -36,7 +36,7 @@ Main Models - Performance of their full model from the paper and this pytorch im
 | Paper ST | 81.4| 54.3 | 47.5 | 40.5 | 35.7 | 68.3 | 54.6 |
 | Paper ST+RPL |79.9 | 56.5 | 48.6 | 42.1 | 42.9 | 73.7 | 57.3 |
 | Pytorch ST | 0 | 0 | 0 | 0 | 0 | 0 | 58.7 | 
-| Pytorch ST+RPL | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
+| Pytorch ST+RPL | 0 | 0 | 0 | 0 | 0 | 0 | 61.1 | 
 
 
 ### Pascal VOC -> Comic:
