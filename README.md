@@ -7,13 +7,12 @@ Results:
 Baseline Models - Recognition performance given the base SSD model pretrained on Pascal VOC from the paper and this pytorch implementation (i.e. the pretrained weights from amdegroot/ssd.pytorch)
 Main Models - Performance of their full model from the paper and this pytorch implementation (ST indicates sytle transfer consistency and RPL indicated robust pseudolabelling)
 
-TBD
+#### TBD:
 * add in full class breakdown of results for pytorch implementation (currently only listng my mAP)
 * Implement with Faster RCNN
   
-
-#  
-Pascal VOC -> Clipart:
+ 
+### Pascal VOC -> Clipart:
 |   | aero | bike | bird | boat | bttle | bus | car | cat | chair | cow | table | dog | horse | mbike | person | plant | sheep | sofa | train | tv | mAP |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | Baseline Models |
@@ -26,8 +25,8 @@ Pascal VOC -> Clipart:
 | Pytorch ST+RPL | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 44.9 |
 
 
-#
-Pascal VOC -> Watercolor
+
+### Pascal VOC -> Watercolor
 |   | bike | bird | car | cat | dog | person | mAP |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | Baseline Models |
@@ -40,8 +39,7 @@ Pascal VOC -> Watercolor
 | Pytorch ST+RPL | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
 
 
-#
-Pascal VOC -> Comic
+### Pascal VOC -> Comic
 |   | bike | bird | car | cat | dog | person | mAP |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | Baseline Models |
