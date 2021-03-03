@@ -47,6 +47,6 @@ Main Models - Performance of their full model from the paper and this pytorch im
 | Pytorch | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
 | Main Models|
 | Paper ST | 51.4 | 17.3 | 39.9 | 21.4 | 31.9 | 56.1 | 36.3 |
-| Paper ST+RPL | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
+| Paper ST+RPL | 55.9 | 19.7 | 42.3 | 23.6 | 31.5 | 63.4 | 39.4 |
 | Pytorch ST | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
 | Pytorch ST+RPL | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
