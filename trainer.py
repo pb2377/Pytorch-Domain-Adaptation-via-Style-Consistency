@@ -60,7 +60,8 @@ def base_trainer(model, args, output_dir, stylized_root, num_classes):
         os.makedirs(os.path.join(output_dir, 'weights'))
 
     # Ensure dataset is fully preprocessed
-    preprocess.check_preprocess(args, train_loader, stylized_root, pseudolabel=False)
+    if not args.no_prep:
+        preprocess.check_preprocess(args, train_loader, stylized_root, pseudolabel=False)
 
     model, best_model, best_map, accuracy_history = train(model, ssd_criterion, optimizer, train_loader,
                                                                   val_data, args.max_its, output_dir,
@@ -154,7 +155,7 @@ def train(model, criterion, optimizer, train_loader, val_dataset, max_iter, outp
 
             iteration += 1
         epoch += 1
-        print('{}/{} Epochs Completed'.format(epoch, max_eps))
+        # print('{}/{} Epochs Completed'.format(epoch, max_eps))
 
     return model, best_model, best_map, accuracy_history
 

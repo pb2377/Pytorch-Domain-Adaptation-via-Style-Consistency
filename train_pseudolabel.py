@@ -63,8 +63,9 @@ def pseudolabel_trainer(model, args, output_dir, stylized_root, num_classes):
         os.makedirs(output_dir)
 
     # Ensure datasets are fully preprocessed
-    preprocess.check_preprocess(args, sc_loader, stylized_root, pseudolabel=False)
-    preprocess.check_preprocess(args, ps_loader, stylized_root, pseudolabel=True)
+    if not args.no_prep:
+        # preprocess.check_preprocess(args, sc_loader, stylized_root, pseudolabel=False)
+        preprocess.check_preprocess(args, ps_loader, stylized_root, pseudolabel=True)
 
     # raise NotImplementedError
     args.max_its = 5000
@@ -236,6 +237,6 @@ def train(model, ps_pair, sc_pair, optimizer, val_dataset, max_iter, output_path
 
             iteration += 1
         epoch += 1
-        print('{}/{} Epochs Completed'.format(epoch, max_eps))
+        # print('{}/{} Epochs Completed'.format(epoch, max_eps))
 
     return model, best_model, best_map, accuracy_history
