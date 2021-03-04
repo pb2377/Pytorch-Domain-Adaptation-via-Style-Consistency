@@ -31,7 +31,7 @@ Main Models - Performance of their full model from the paper and this pytorch im
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | Baseline Models |
 | Paper | 79.8 | 49.5 | 38.1 | 35.1 | 30.4 | 65.1 | 49.6 |
-| Pytorch | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
+| Pytorch | 77.5 | 48.5 | 44.6 | 30.3 | 27.9 | 62.7 | 48.6 | 
 | Main Models|
 | Paper ST | 81.4| 54.3 | 47.5 | 40.5 | 35.7 | 68.3 | 54.6 |
 | Paper ST+RPL |79.9 | 56.5 | 48.6 | 42.1 | 42.9 | 73.7 | 57.3 |
