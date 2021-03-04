@@ -7,6 +7,7 @@ Results:
 Baseline Models - Recognition performance given the base SSD model pretrained on Pascal VOC from the paper and this pytorch implementation (i.e. the pretrained weights from amdegroot/ssd.pytorch)
 Main Models - Performance of their full model from the paper and this pytorch implementation (ST indicates sytle transfer consistency and RPL indicated robust pseudolabelling)
 
+One slight odd results is that 
 #### TBD:
 * Write in full class breakdown of results for pytorch implementation (currently only listng my mAP)
 * Implement with Faster RCNN
@@ -34,9 +35,9 @@ Main Models - Performance of their full model from the paper and this pytorch im
 | Pytorch | 77.5 | 48.5 | 44.6 | 30.3 | 27.9 | 62.7 | 48.6 | 
 | Main Models|
 | Paper ST | 81.4| 54.3 | 47.5 | 40.5 | 35.7 | 68.3 | 54.6 |
-| Paper ST+RPL |79.9 | 56.5 | 48.6 | 42.1 | 42.9 | 73.7 | 57.3 |
-| Pytorch ST | 0 | 0 | 0 | 0 | 0 | 0 | 58.7 | 
-| Pytorch ST+RPL | 0 | 0 | 0 | 0 | 0 | 0 | 61.1 | 
+| Paper ST+RPL | 79.9 | 56.5 | 48.6 | 42.1 | 42.9 | 73.7 | 57.3 |
+| Pytorch ST | 100.0 | 51.0 | 54.5 | 36.3 | 39.4 | 70.9 | 58.7 | 
+| Pytorch ST+RPL | 98.2 | 54.3 | 56.0 | 41.1 | 43.5 | 76.0 | 61.5 | 
 
 
 ### Pascal VOC -> Comic:
@@ -44,9 +45,9 @@ Main Models - Performance of their full model from the paper and this pytorch im
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | Baseline Models |
 | Paper | 43.9 | 10.0 | 19.4 | 12.9 | 20.3 | 42.6 | 24.9 | 
-| Pytorch | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
+| Pytorch | 45.4 | 9.7 | 25.6 | 9.8 | 10.9 | 36.7 | 23.0 | 
 | Main Models|
 | Paper ST | 51.4 | 17.3 | 39.9 | 21.4 | 31.9 | 56.1 | 36.3 |
 | Paper ST+RPL | 55.9 | 19.7 | 42.3 | 23.6 | 31.5 | 63.4 | 39.4 |
-| Pytorch ST | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
+| Pytorch ST | 49.5 | 14.9 | 38.4 | 24.3 | 28.7 | 60.6 | 36.1 | 
 | Pytorch ST+RPL | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
