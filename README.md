@@ -10,6 +10,7 @@ Main Models - Performance of their full model from the paper and this pytorch im
 My implementation produces near-identical mAP to the original implementation's performance listed in the paper (class-specific AP varies a little, but not significantly). The only functional difference between this pytorch version and the original is that the paper implies they use a single style source to stylise each batch of training examples, which implies online style transfer training data. I run stylisation as preprocessing step to get N stylised copies of each annotated photograph, and then sample from these randomly from these -- i.e. here a style image stylises a batch worth of training images, but these stylised images are sampled separately.
 #### TBD:
 * Implement with Faster RCNN
+* More datasets
   
  
 ### Pascal VOC -> Clipart:
