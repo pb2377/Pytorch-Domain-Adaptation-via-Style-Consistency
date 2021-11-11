@@ -1,5 +1,27 @@
 # Pytorch-Domain-Adaptation-via-Style-Consistency
 
+## How to run:
+
+To run the code and do the full training as described in the paper, run the command
+
+`python main.py --train --target_domain clipart`
+
+or change clipart for the target domain of your choice (i.e. clipart, watercolour, comic). There are also various optional arguments that can be used to change various hyper parameters.
+
+There are some pre-trained weights you need to download:
+1. pretrained VGG16 weights (https://s3.amazonaws.com/amdegroot-models/vgg16_reducedfc.pth) and SSD weights (https://s3.amazonaws.com/amdegroot-models/ssd300_mAP_77.43_v2.pth) taken from  the SSD implementation amdegroot/ssd.pytorch -- place these in a directory 'weights'
+2. pretrained Ada in model weights decoder.pth and vgg_normalized.pth that can be found in https://github.com/naoto0804/pytorch-AdaIN --  place these in the directory 'style-models'.
+
+You'll also need to set up the directory paths for the two datasets (VOC and Clipart1k-Watercolor2k-Comic2k). The code will run the style transfer preprocess over the VOC dataset using the chosen target domain a few times before starting training. 
+
+
+## Environment
+python=3.7.4
+see requirements.txt
+
+## Discussion
+
+
 My PyTorch implementation of Domain Adaptation for Object Detection via Style Consistency (https://arxiv.org/abs/1911.10033) developed from base SSD pytorch implementation (https://github.com/amdegroot/ssd.pytorch) and Ada In fast styl transfer (https://github.com/naoto0804/pytorch-AdaIN).
 
 
@@ -12,7 +34,7 @@ My implementation produces near-identical mAP to the original implementation's p
 * Implement with Faster RCNN
 * More datasets
   
- 
+## Results
 ### Pascal VOC -> Clipart:
 |   | aero | bike | bird | boat | bttle | bus | car | cat | chair | cow | table | dog | horse | mbike | person | plant | sheep | sofa | train | tv | mAP |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
