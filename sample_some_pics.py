@@ -1,10 +1,12 @@
 import os
-import sys
 import os.path as osp
-from shutil import copyfile
-from data import VOC_CLASSES, VOCAnnotationTransform
 import random
+import sys
+
 import cv2
+
+from data import VOC_CLASSES, VOCAnnotationTransform
+
 if sys.version_info[0] == 2:
     import xml.etree.cElementTree as ET
 else:

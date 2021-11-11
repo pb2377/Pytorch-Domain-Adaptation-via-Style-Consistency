@@ -104,7 +104,6 @@ def main(args, cfg):
         # load base model weights
         print('Model loaded.')
 
-
     # create test dataset
     dataset_mean = (104, 117, 123)
     set_type = 'test'
