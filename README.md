@@ -15,9 +15,10 @@ There are some pre-trained weights you need to download:
 You'll also need to set up the directory paths for the two datasets (VOC and Clipart1k-Watercolor2k-Comic2k). The code will run the style transfer preprocess over the VOC dataset using the chosen target domain a few times before starting training. 
 
 
-## Environment
-python=3.7.4
-see requirements.txt
+## Environment and Libraries
+
+- python=3.7.4
+- see requirements.txt
 
 ## Discussion
 
