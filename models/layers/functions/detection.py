@@ -1,5 +1,6 @@
 import torch
 from torch.autograd import Function
+
 from ..box_utils import decode, nms
 
 
@@ -9,6 +10,7 @@ class Detect(Function):
     scores and threshold to a top_k number of output predictions for both
     confidence score and locations.
     """
+
     def __init__(self, num_classes, bkg_label, top_k, conf_thresh, nms_thresh, cfg):
         self.num_classes = num_classes
         self.background_label = bkg_label

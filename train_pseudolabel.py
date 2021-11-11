@@ -1,45 +1,33 @@
-import os
-import torch
-import eval
 import copy
-from trainer import boxes_from_dets, visualize_boxes
+import json
+import os
+from itertools import cycle
+
+import torch
+import torch.utils.data as data
 from torch.utils.tensorboard import SummaryWriter
+
+import eval
+import preprocess
+import pseudolabel
 from cfg import *
 from data import datasets, style_detection_collate, BaseTransform, VOCAnnotationTransform
 from models.layers.modules import MultiBoxLoss, FeatureConsistency
 from utils.augmentations import StyleAugmentation
-import torch.utils.data as data
-import preprocess
-import json
-from utils.utils import report_and_save
-import pseudolabel
-from itertools import cycle
 
 
 def pseudolabel_trainer(model, args, output_dir, stylized_root, num_classes):
     # check output directory
-    if args.checkpoint is None and args.pseudolabel:
-        # find assumed base weights...
-        guess_path = os.path.join(output_dir, 'weights', 'ssd300-final.pth')
-        print('No checkpoint given, loading checkpoint from {}'.format(guess_path))
-        assert os.path.exists(guess_path)
-        state_dict_to_load = torch.load(guess_path, map_location='cpu')
-        model.load_state_dict(state_dict_to_load)
+    print('Generating Pseudolabels...')
+    dataset_mean = (104, 117, 123)
+    pseudo_dataset = datasets.ArtDetection(root=args.style_root, transform=BaseTransform(300, dataset_mean),
+                                           target_domain=args.target_domain, set_type='train',
+                                           target_transform=VOCAnnotationTransform())
+    pslabels = pseudolabel.pseudolabel(model, pseudo_dataset, args.pthresh, overlap_thresh=args.overlap_thresh)
 
-    if args.generate_ps:
-        print('Generating Pseudolabels...')
-        dataset_mean = (104, 117, 123)
-        pseudo_dataset = datasets.ArtDetection(root=args.style_root, transform=BaseTransform(300, dataset_mean),
-                                               target_domain=args.target_domain, set_type='train',
-                                               target_transform=VOCAnnotationTransform())
-        pslabels = pseudolabel.pseudolabel(model, pseudo_dataset, args.pthresh, overlap_thresh=args.overlap_thresh)
-
-        print("Saving pseudolabels JSON file to {}...".format(os.path.join(output_dir, 'pslabels.json')))
-        with open(os.path.join(output_dir, 'pslabels.json'), 'w') as fp:
-            json.dump(pslabels, fp)
-    else:
-        with open(os.path.join(output_dir, 'pslabels.json')) as json_file:
-            pslabels = json.load(json_file)
+    print("Saving pseudolabels JSON file to {}...".format(os.path.join(output_dir, 'pslabels.json')))
+    with open(os.path.join(output_dir, 'pslabels.json'), 'w') as fp:
+        json.dump(pslabels, fp)
 
     # Source, pseudolablled and validation datasets
     sc_loader, ps_loader, val_data = get_dataloaders(args, stylized_root, pslabels)
@@ -47,7 +35,7 @@ def pseudolabel_trainer(model, args, output_dir, stylized_root, num_classes):
     # training criterion for source data
     ssd_criterion = MultiBoxLoss(num_classes, 0.5, True, 0, True, 3, 0.5, False, cfg, torch.cuda.is_available(),
                                  neg_thresh=0.)
-    style_criterion = FeatureConsistency(cosine=args.cosine)
+    style_criterion = FeatureConsistency()
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum,
                                 weight_decay=args.weight_decay)
 
@@ -63,23 +51,20 @@ def pseudolabel_trainer(model, args, output_dir, stylized_root, num_classes):
         os.makedirs(output_dir)
 
     # Ensure datasets are fully preprocessed
-    if not args.no_prep:
-        # preprocess.check_preprocess(args, sc_loader, stylized_root, pseudolabel=False)
-        preprocess.check_preprocess(args, ps_loader, stylized_root, pseudolabel=True)
+    # preprocess.check_preprocess(args, sc_loader, stylized_root, pseudolabel=False)
+    preprocess.check_preprocess(args, ps_loader, stylized_root, args.stage2_its, pseudolabel=True)
 
-    # raise NotImplementedError
-    args.max_its = 5000
-    print("Setting max iterations to 5000 for pseudolabel training.")
-    model, best_model, best_map, accuracy_history = train(model, ps_pair, sc_pair, optimizer, val_data, args.max_its,
+    # print("Setting max iterations to 5000 for pseudolabel training.")
+    model, best_model, best_map, accuracy_history = train(model, ps_pair, sc_pair, optimizer, val_data, args.stage2_its,
                                                           output_dir, log_freq=args.log_freq, test_freq=args.test_freq,
                                                           aux_criterion=style_criterion)
-    report_and_save(model, best_model, best_map, accuracy_history, output_dir,  args.max_its, pseudolabel=True)
+    report_and_save(model, best_model, best_map, accuracy_history, output_dir, args.stage2_its, pseudolabel=True)
     return model
 
 
 def get_dataloaders(args, stylized_root, pslabels):
-    train_transform = StyleAugmentation(cfg['min_dim'], MEANS, args.photometric, random_sample=args.random_sample,
-                                        expand=args.expand)
+    train_transform = StyleAugmentation(cfg['min_dim'], MEANS, False, random_sample=True,
+                                        expand=True)
 
     train_dataset = datasets.StylizedVOCDetection(args.voc_root, args.target_domain,
                                                   image_sets=[('2007', 'trainval'), ('2012', 'trainval')],
@@ -108,7 +93,7 @@ def get_dataloaders(args, stylized_root, pslabels):
 
 
 def train(model, ps_pair, sc_pair, optimizer, val_dataset, max_iter, output_path,
-                      log_freq=100, test_freq=100, aux_criterion=None):
+          log_freq=100, test_freq=100, aux_criterion=None):
     """
     As standard trainer but with mixed dataset of Pseudolabels and Labelled VOC data, and train much like "frustratingly
     easy few shot learning" and evaluate on batches of the source and novel (pseudo) examples.
@@ -119,13 +104,12 @@ def train(model, ps_pair, sc_pair, optimizer, val_dataset, max_iter, output_path
     ps_loader, criterion_ps = ps_pair  # pseudolabel dataloader and criterion
     sc_loader, criterion_sc = sc_pair  # souerce dataloader and criterion
     del ps_pair, sc_pair
-    iteration = 0
     accuracy_history = []
     best_map = 0.0
     best_model = copy.deepcopy(model.state_dict())
 
     # Tensorboard writer
-    writer = SummaryWriter(log_dir=os.path.join(output_path, 'pseudolabel'))
+    writer = SummaryWriter(log_dir=os.path.join(output_path, 'logs-pseudolabel'))
     writer.add_scalar("Test_mAP", 0., 0)
 
     model.train()
@@ -133,8 +117,8 @@ def train(model, ps_pair, sc_pair, optimizer, val_dataset, max_iter, output_path
         model = model.cuda()
 
     epoch = 0
-    max_eps = (max_iter / len(ps_loader)) + 1
-    while iteration <= max_iter:
+    iteration = 0
+    while iteration < max_iter:
         for ps_batch, sc_batch in zip(cycle(ps_loader), sc_loader):
             ps_images, ps_style_ims, ps_targets = ps_batch
             sc_images, sc_style_ims, sc_targets = sc_batch
@@ -159,8 +143,8 @@ def train(model, ps_pair, sc_pair, optimizer, val_dataset, max_iter, output_path
             ps_out = []
             sc_out = []
             for output in out[:-1]:
-                ps_out.append(output[:ps_images.size(0)*2])
-                sc_out.append(output[ps_images.size(0)*2:])
+                ps_out.append(output[:ps_images.size(0) * 2])
+                sc_out.append(output[ps_images.size(0) * 2:])
             ps_out.append(out[-1])
             sc_out.append(out[-1])
 
@@ -211,7 +195,7 @@ def train(model, ps_pair, sc_pair, optimizer, val_dataset, max_iter, output_path
                 save_path = os.path.join(output_path, 'weights', 'iteraton-{}.pth'.format(iteration))
                 torch.save(model.state_dict(), save_path)
 
-            if iteration >= max_iter - (10*test_freq):
+            if iteration >= max_iter - (10 * test_freq):
                 if iteration == max_iter or iteration % test_freq == 0:
                     model.eval()
                     eval.FULL_REPORT = False
@@ -225,18 +209,6 @@ def train(model, ps_pair, sc_pair, optimizer, val_dataset, max_iter, output_path
                         best_map = accuracy_history[-1]['mAP']
                         best_model = copy.deepcopy(model.state_dict())
 
-                    # summary writer
-            # else:
-            #     if not iteration % 1000 and iteration > 0:
-            #         model.eval()
-            #         eval.FULL_REPORT = False
-            #         acc = eval.evaluate(model, val_dataset, os.path.join(output_path, 'tempdets'.format(iteration)))
-            #         writer.add_scalar("Test_mAP", acc['mAP'], iteration)
-            #         model.train()
-            #         # summary writer
-
             iteration += 1
-        epoch += 1
-        # print('{}/{} Epochs Completed'.format(epoch, max_eps))
 
     return model, best_model, best_map, accuracy_history

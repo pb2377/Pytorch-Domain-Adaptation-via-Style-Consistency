@@ -1,11 +1,10 @@
 import os
 import pickle
-from torchvision import transforms
-from PIL import Image, ImageDraw
-from visdom import Visdom
+
 import numpy as np
 import torch
-
+from PIL import Image, ImageDraw
+from torchvision import transforms
 
 labelmap = (  # always index 0
     'aeroplane', 'bicycle', 'bird', 'boat',
@@ -55,25 +54,6 @@ def plot_bounding_boxes(annos, image, colour):
     return image
 
 
-class VisdomLinePlotter(object):
-    """Plots to Visdom"""
-    def __init__(self, env_name='main'):
-        self.viz = Visdom()
-        self.env = env_name
-        self.plots = {}
-    def plot(self, var_name, split_name, title_name, x, y):
-        if var_name not in self.plots:
-            self.plots[var_name] = self.viz.line(X=np.array([x,x]), Y=np.array([y,y]), env=self.env, opts=dict(
-                legend=[split_name],
-                title=title_name,
-                xlabel='Epochs',
-                ylabel=var_name
-            ))
-        else:
-            self.viz.line(X=np.array([x]), Y=np.array([y]), env=self.env, win=self.plots[var_name], name=split_name,
-                          update='append')
-
-
 def report_and_save(model, best_model, best_map, accuracy_history, output_dir, max_its=None, pseudolabel=False):
     # Average mAP over test points
     avg_map = []
@@ -92,11 +72,12 @@ def report_and_save(model, best_model, best_map, accuracy_history, output_dir, m
     # Save All Outputs
     # save final model
     torch.save(model.state_dict(), os.path.join(output_dir, 'weights',
-                                                'ssd300-{}final.pth'.format('ps-' if pseudolabel else '')))
+                                                'ssd300-final{}.pth'.format(
+                                                    '-withpseudolabels' if pseudolabel else '')))
 
     # save best model
     torch.save(best_model, os.path.join(output_dir, 'weights',
-                                        'ssd300-{}best.pth'.format('ps-' if pseudolabel else '')))
+                                        'ssd300-best{}.pth'.format('-withpseudolabels' if pseudolabel else '')))
 
     # save accuracy history
     output_file = os.path.join(output_dir, 'accuracy_hist.pkl')

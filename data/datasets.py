@@ -7,14 +7,13 @@ Updated by: Ellis Brown, Max deGroot
 """
 import os.path as osp
 import sys
-import torch
-import torch.utils.data as data
+from random import shuffle
+
 import cv2
 import numpy as np
-from random import shuffle
-from numpy import random
-from skimage.segmentation import slic
-from skimage.color import label2rgb
+import torch
+import torch.utils.data as data
+
 if sys.version_info[0] == 2:
     import xml.etree.cElementTree as ET
 else:
@@ -345,7 +344,7 @@ class StylizedVOCDetection(VOCDetection):
 def fix_size(image, h, w):
     delta_h = int(round(abs(image.shape[0] - h) / 2))
     delta_w = int(round(abs(image.shape[1] - w) // 2))
-    image = image[delta_h:delta_h+h, delta_w:delta_w+w]
+    image = image[delta_h:delta_h + h, delta_w:delta_w + w]
     return image
 
 
@@ -398,6 +397,7 @@ class PseudolabelDataset(data.Dataset):
     """
     Pseudolabelled examples from Clipart-watercolor-comic Detection Dataset Object
     """
+
     def __init__(self, pseudolabels, root, target_domain, transform=None, stylized_root=None, mode='fast',
                  set_type='train'):
         super(PseudolabelDataset, self).__init__()
@@ -445,7 +445,6 @@ class PseudolabelDataset(data.Dataset):
         img_id = self.ids[index]
         target = self.pseudolabels[img_id[-1]]
 
-
         img = cv2.imread(self._imgpath % img_id)
         height, width, channels = img.shape
 
@@ -471,7 +470,8 @@ class PseudolabelDataset(data.Dataset):
             img = img[:, :, (2, 1, 0)].astype(np.float32)
             style_img = style_img[:, :, (2, 1, 0)].astype(np.float32)
             target = np.hstack((boxes, np.expand_dims(labels, axis=1)))
-        return torch.from_numpy(img).permute(2, 0, 1), torch.from_numpy(style_img).permute(2, 0, 1), target, height, width
+        return torch.from_numpy(img).permute(2, 0, 1), torch.from_numpy(style_img).permute(2, 0,
+                                                                                           1), target, height, width
 
     def pull_image_and_info(self, index):
         '''Returns the original image object at index in PIL form and img_id

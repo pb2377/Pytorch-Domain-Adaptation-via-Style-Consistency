@@ -5,19 +5,18 @@
 """
 
 from __future__ import print_function
+
+import os
+import pickle
+import sys
+import time
+
+import numpy as np
 import torch
-from torch.autograd import Variable
-from data import VOC_ROOT
-from data import VOC_CLASSES as labelmap
-from data import datasets, BaseTransform
 from torchvision import transforms
 
-import sys
-import os
-import time
-import argparse
-import numpy as np
-import pickle
+from data import VOC_CLASSES as labelmap
+from data import datasets
 
 if sys.version_info[0] == 2:
     import xml.etree.cElementTree as ET
@@ -33,7 +32,6 @@ if torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.FloatTensor')
 else:
     torch.set_default_tensor_type('torch.FloatTensor')
-
 
 FULL_REPORT = True
 MEANS = (104, 117, 123)
@@ -53,9 +51,9 @@ def main():
     #     all_boxes = unpickler.load()
 
 
-
 class Timer(object):
     """A simple timer."""
+
     def __init__(self):
         self.total_time = 0.
         self.calls = 0
@@ -128,7 +126,7 @@ def write_voc_results_file(all_boxes, dataset, outpath, set_type):
         filename = get_voc_results_file_template(outpath, set_type, cls)
         with open(filename, 'wt') as f:
             for im_ind, index in enumerate(dataset.ids):
-                dets = all_boxes[cls_ind+1][im_ind]
+                dets = all_boxes[cls_ind + 1][im_ind]
                 if dets == []:
                     continue
                 # the VOCdevkit expects 1-based indices
@@ -152,8 +150,8 @@ def do_python_eval(output_dir, annopath, imgsetpath, target_domain, use_07=True,
     for i, cls in enumerate(labelmap):
         filename = get_voc_results_file_template(output_dir, set_type, cls)
         rec, prec, ap = voc_eval(
-           filename, annopath, imgsetpath.format(set_type), cls, cachedir,
-           ovthresh=overlap_threshold, use_07_metric=use_07)
+            filename, annopath, imgsetpath.format(set_type), cls, cachedir,
+            ovthresh=overlap_threshold, use_07_metric=use_07)
         aps += [ap]
 
         if FULL_REPORT:
@@ -272,7 +270,7 @@ def voc_eval(detpath,
         if i % 100 == 0:
             if FULL_REPORT:
                 print('Reading annotation for {:d}/{:d}'.format(
-                   i + 1, len(imagenames)))
+                    i + 1, len(imagenames)))
     # save
     if FULL_REPORT:
         print('Saving cached annotations to {:s}'.format(cachefile))
@@ -393,7 +391,8 @@ def evaluate_detections(box_list, output_dir, dataset, set_type, use_07=True):
     write_voc_results_file(box_list, dataset, output_dir, set_type)
     annopath = dataset._annopath % (os.path.join(dataset.root, dataset.target_domain), '%s')
     imgsetpath = dataset._imgsetpath
-    accuracy_dict = do_python_eval(output_dir, annopath, imgsetpath, dataset.target_domain, use_07=use_07, set_type=set_type)
+    accuracy_dict = do_python_eval(output_dir, annopath, imgsetpath, dataset.target_domain, use_07=use_07,
+                                   set_type=set_type)
     return accuracy_dict
 
 

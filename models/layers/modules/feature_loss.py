@@ -1,8 +1,5 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from torchvision import transforms
-from PIL import Image
 
 
 class FeatureConsistency(nn.Module):

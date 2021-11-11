@@ -1,25 +1,27 @@
-import torch
-import styletransfer
 import os
-from torchvision import transforms
 import time
-from math import ceil
-from data.datasets import StyleSampler
-from PIL import Image
 from random import shuffle
 
+import torch
+from PIL import Image
+from torchvision import transforms
 
-def check_preprocess(args, dataloader, stylized_root, pseudolabel=False):
-    if args.mode == 'fast':
-        if not args.no_prep:
-            preserve_colour = False
-            if args.preserve_colours == 'random':
-                preserve_colour = None
-            elif args.preserve_colours == 'preserve':
-                preserve_colour = True
-            preprocess(dataloader.dataset, args.target_domain, args.max_its, args.batch_size,
-                       args.style_root, stylized_root, set_type='train', preserve_colour=preserve_colour,
-                       pseudo=pseudolabel)
+import styletransfer
+from data.datasets import StyleSampler
+
+
+def check_preprocess(args, dataloader, stylized_root, iterations, pseudolabel=False):
+    if args.no_prep or args.mode != 'fast':
+        pass
+    else:
+        preserve_colour = False
+        if args.preserve_colours == 'random':
+            preserve_colour = None
+        elif args.preserve_colours == 'preserve':
+            preserve_colour = True
+        preprocess(dataloader.dataset, args.target_domain, iterations, args.batch_size,
+                   args.style_root, stylized_root, set_type='train', preserve_colour=preserve_colour,
+                   pseudo=pseudolabel)
 
 
 def preprocess(base_dataset, target_domain, max_its, batch_size, style_root, stylized_root, set_type,
@@ -32,11 +34,12 @@ def preprocess(base_dataset, target_domain, max_its, batch_size, style_root, sty
 
     base_path = os.path.join(stylized_root, '{}/{}_'.format(target_domain, episode))
 
-    max_prep = ceil(max_its / (len(base_dataset) / float(batch_size)))
-    max_prep = min(30 if pseudo else 10, max_prep)
+    # max_prep = ceil(max_its / (len(base_dataset) / float(batch_size)))
+    max_prep = 10 if pseudo else 5
     shuffle_idx = [i for i in range(len(base_dataset))]
 
     t0 = time.time()
+    print('Style transferring training examples {} times...'.format(max_prep))
     while len(shuffle_idx) > 0:
         shuffle(shuffle_idx)
         for idx in range(len(base_dataset)):

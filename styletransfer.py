@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+
 from stylenet import vgg, decoder
 
 
@@ -131,7 +132,7 @@ def coral(source, target):
 def _calc_feat_flatten_mean_std(feat):
     # takes 3D feat (C, H, W), return mean and std of array within channels
     assert (feat.size()[0] == 3)
-#    assert (isinstance(feat, torch.FloatTensor))
+    #    assert (isinstance(feat, torch.FloatTensor))
     feat_flatten = feat.view(3, -1)
     mean = feat_flatten.mean(dim=-1, keepdim=True)
     std = feat_flatten.std(dim=-1, keepdim=True)

@@ -1,16 +1,18 @@
-import torch
-from torchvision import transforms
-import cv2
-import sys
-import numpy as np
-import types
-from numpy import random
-from random import shuffle
 import os.path as osp
+import sys
+import types
+from random import shuffle
+
+import cv2
+import numpy as np
+import torch
+from numpy import random
+from torchvision import transforms
+
 if sys.version_info[0] == 2:
-    import xml.etree.cElementTree as ET
+    pass
 else:
-    import xml.etree.ElementTree as ET
+    pass
 
 
 def intersect(box_a, box_b):
@@ -32,10 +34,10 @@ def jaccard_numpy(box_a, box_b):
         jaccard overlap: Shape: [box_a.shape[0], box_a.shape[1]]
     """
     inter = intersect(box_a, box_b)
-    area_a = ((box_a[:, 2]-box_a[:, 0]) *
-              (box_a[:, 3]-box_a[:, 1]))  # [A,B]
-    area_b = ((box_b[2]-box_b[0]) *
-              (box_b[3]-box_b[1]))  # [A,B]
+    area_a = ((box_a[:, 2] - box_a[:, 0]) *
+              (box_a[:, 3] - box_a[:, 1]))  # [A,B]
+    area_b = ((box_b[2] - box_b[0]) *
+              (box_b[3] - box_b[1]))  # [A,B]
     union = area_a + area_b - inter
     return inter / union  # [A,B]
 
@@ -76,7 +78,7 @@ class SingleImageCompose(object):
 
     def __call__(self, img, boxes=None, labels=None):
         for t in self.transforms:
-            img, boxes, labels = t(img,  boxes, labels)
+            img, boxes, labels = t(img, boxes, labels)
         return img, boxes, labels
 
 
@@ -249,6 +251,7 @@ class RandomSampleCrop(object):
             boxes (Tensor): the adjusted bounding boxes in pt form
             labels (Tensor): the class labels for each bbox
     """
+
     def __init__(self, entire_image=True):
         self.sample_options = (
             # using entire original input image
@@ -294,7 +297,7 @@ class RandomSampleCrop(object):
                 top = random.uniform(height - h)
 
                 # convert to integer rect x1,y1,x2,y2
-                rect = np.array([int(left), int(top), int(left+w), int(top+h)])
+                rect = np.array([int(left), int(top), int(left + w), int(top + h)])
 
                 # calculate IoU (jaccard overlap) b/t the cropped and gt boxes
                 overlap = jaccard_numpy(boxes, rect)
@@ -305,9 +308,9 @@ class RandomSampleCrop(object):
 
                 # cut the crop from the image
                 current_image = current_image[rect[1]:rect[3], rect[0]:rect[2],
-                                              :]
+                                :]
                 current_style = current_style[rect[1]:rect[3], rect[0]:rect[2],
-                                              :]
+                                :]
 
                 # keep overlap with gt box IF center in sampled patch
                 centers = (boxes[:, :2] + boxes[:, 2:]) / 2.0
@@ -371,6 +374,7 @@ class RandomCrop(object):
             boxes (Tensor): the adjusted bounding boxes in pt form
             labels (Tensor): the class labels for each bbox
     """
+
     def __init__(self, sample_options=None):
         if sample_options is None:
             self.sample_options = (
@@ -405,13 +409,13 @@ class RandomCrop(object):
                 top = random.uniform(height - h)
 
                 # convert to integer rect x1,y1,x2,y2
-                rect = np.array([int(left), int(top), int(left+w), int(top+h)])
+                rect = np.array([int(left), int(top), int(left + w), int(top + h)])
 
                 # cut the crop from the image
                 current_image = current_image[rect[1]:rect[3], rect[0]:rect[2],
-                                              :]
+                                :]
                 current_style = current_style[rect[1]:rect[3], rect[0]:rect[2],
-                                              :]
+                                :]
 
                 return current_image, current_style, boxes, labels
 
@@ -426,25 +430,25 @@ class Expand(object):
 
         height, width, depth = image.shape
         ratio = random.uniform(1, 4)
-        left = random.uniform(0, width*ratio - width)
-        top = random.uniform(0, height*ratio - height)
+        left = random.uniform(0, width * ratio - width)
+        top = random.uniform(0, height * ratio - height)
 
         # expand main image
         expand_image = np.zeros(
-            (int(height*ratio), int(width*ratio), depth),
+            (int(height * ratio), int(width * ratio), depth),
             dtype=image.dtype)
         expand_image[:, :, :] = self.mean
         expand_image[int(top):int(top + height),
-                     int(left):int(left + width)] = image
+        int(left):int(left + width)] = image
         image = expand_image
 
         # expand style image
         expand_image = np.zeros(
-            (int(height*ratio), int(width*ratio), depth),
+            (int(height * ratio), int(width * ratio), depth),
             dtype=image.dtype)
         expand_image[:, :, :] = self.mean
         expand_image[int(top):int(top + height),
-                     int(left):int(left + width)] = style_im
+        int(left):int(left + width)] = style_im
         style_im = expand_image
 
         if boxes is not None:
@@ -456,7 +460,7 @@ class Expand(object):
 
 
 class RandomMirror(object):
-    def __call__(self, image, style_im,  boxes, classes):
+    def __call__(self, image, style_im, boxes, classes):
         _, width, _ = image.shape
         if random.randint(2):
             image = image[:, ::-1]
@@ -587,6 +591,7 @@ class StyleData(object):
     """
     Data path for style examples for style transfer preprocessing.
     """
+
     def __init__(self, root, target_domain=None, train=True):
         assert target_domain in ['clipart', 'watercolor', 'comic']
         self.root = root

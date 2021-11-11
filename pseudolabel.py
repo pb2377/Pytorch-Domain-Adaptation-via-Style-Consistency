@@ -1,16 +1,11 @@
 from __future__ import print_function
-from data import *
-import torch
 
-from torch.autograd import Variable
-
-from torchvision import transforms
-from data import VOC_ROOT, VOC_CLASSES as labelmap
 from PIL import Image, ImageDraw
-import torch.optim as optim
+from torch.autograd import Variable
+from torchvision import transforms
 
-import numpy as np
-
+from data import *
+from data import VOC_CLASSES as labelmap
 
 VOC_CLASSES = (  # always index 0
     'aeroplane', 'bicycle', 'bird', 'boat',
@@ -25,10 +20,11 @@ def pseudolabel(net, dataset, pthresh, overlap_thresh=0.45):
     net.eval()
     num_images = len(dataset)
     all_boxes = [[[] for _ in range(num_images)]
-                 for _ in range(len(labelmap)+1)]
+                 for _ in range(len(labelmap) + 1)]
 
     pseudolabels = {}
     n_labels = 0
+
     for i in range(num_images):
         im, img_id, gt, h, w = dataset.pull_item(i)
         img_id = img_id[-1]
@@ -137,7 +133,7 @@ def draw_annos(image, annos, colour=(0, 0, 255)):
             anno[3] = int(anno[3] * h)
         anno = [int(i) for i in anno]
         drw.rectangle(anno[:-1], outline=colour)
-        drw.text(anno[:2], VOC_CLASSES[anno[-1]-1], colour=colour)
+        drw.text(anno[:2], VOC_CLASSES[anno[-1] - 1], colour=colour)
     return image
 
 

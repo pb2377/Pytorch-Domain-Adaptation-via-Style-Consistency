@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
+
 from ..box_utils import match, log_sum_exp
 
 
@@ -101,7 +102,7 @@ class MultiBoxLoss(nn.Module):
             _, loss_idx = loss_c.sort(1, descending=True)
             _, idx_rank = loss_idx.sort(1)
             num_pos = pos.long().sum(1, keepdim=True)
-            num_neg = torch.clamp(self.negpos_ratio*num_pos, max=pos.size(1)-1)
+            num_neg = torch.clamp(self.negpos_ratio * num_pos, max=pos.size(1) - 1)
             neg = idx_rank < num_neg.expand_as(idx_rank)
 
             # Confidence Loss Including Positive and Negative Examples
@@ -120,15 +121,15 @@ class MultiBoxLoss(nn.Module):
             _, loss_idx = loss_c.sort(1, descending=True)
             _, idx_rank = loss_idx.sort(1)
             num_pos = pos.long().sum(1, keepdim=True)
-            num_neg = torch.clamp(self.negpos_ratio*num_pos, max=pos.size(1)-1)
+            num_neg = torch.clamp(self.negpos_ratio * num_pos, max=pos.size(1) - 1)
             neg = idx_rank < num_neg.expand_as(idx_rank)
 
             # Confidence Loss Including Positive and Negative Examples
             pos_idx = pos.unsqueeze(2).expand_as(conf_data)
             neg_idx = neg.unsqueeze(2).expand_as(conf_data)
 
-        conf_p = conf_data[(pos_idx+neg_idx).gt(0)].view(-1, self.num_classes)
-        targets_weighted = conf_t[(pos+neg).gt(0)]
+        conf_p = conf_data[(pos_idx + neg_idx).gt(0)].view(-1, self.num_classes)
+        targets_weighted = conf_t[(pos + neg).gt(0)]
 
         # if self.mode == 'pos+neg':
         #     # Postives and negatives
@@ -265,7 +266,7 @@ class SelfMultiBoxLoss(nn.Module):
             _, loss_idx = loss_c.sort(1, descending=True)
             _, idx_rank = loss_idx.sort(1)
             num_pos = pos.long().sum(1, keepdim=True)
-            num_neg = torch.clamp(self.negpos_ratio*num_pos, max=pos.size(1)-1)
+            num_neg = torch.clamp(self.negpos_ratio * num_pos, max=pos.size(1) - 1)
             neg = idx_rank < num_neg.expand_as(idx_rank)
 
             # Confidence Loss Including Positive and Negative Examples
@@ -284,7 +285,7 @@ class SelfMultiBoxLoss(nn.Module):
             _, loss_idx = loss_c.sort(1, descending=True)
             _, idx_rank = loss_idx.sort(1)
             num_pos = pos.long().sum(1, keepdim=True)
-            num_neg = torch.clamp(self.negpos_ratio*num_pos, max=pos.size(1)-1)
+            num_neg = torch.clamp(self.negpos_ratio * num_pos, max=pos.size(1) - 1)
             neg = idx_rank < num_neg.expand_as(idx_rank)
 
             # Confidence Loss Including Positive and Negative Examples
@@ -293,7 +294,7 @@ class SelfMultiBoxLoss(nn.Module):
 
         if 'pos' in mode:
             # Postives and negatives
-            conf_p = conf_data[(pos_idx+neg_idx).gt(0)].view(-1, self.num_classes)
+            conf_p = conf_data[(pos_idx + neg_idx).gt(0)].view(-1, self.num_classes)
             targets_weighted = conf_t[(pos + neg).gt(0)]
         elif 'pos' not in mode:
             # Negatives only

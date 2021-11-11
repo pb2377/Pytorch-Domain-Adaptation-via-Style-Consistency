@@ -5,17 +5,16 @@
 """
 
 from __future__ import print_function
-import torch
-from torch.autograd import Variable
-from data import VOC_ROOT
-from data import VOC_CLASSES as labelmap
 
-import sys
 import os
-import time
-import argparse
-import numpy as np
 import pickle
+import sys
+import time
+
+import numpy as np
+import torch
+
+from data import VOC_CLASSES as labelmap
 
 if sys.version_info[0] == 2:
     import xml.etree.cElementTree as ET
@@ -32,12 +31,12 @@ if torch.cuda.is_available():
 else:
     torch.set_default_tensor_type('torch.FloatTensor')
 
-
 FULL_REPORT = True
 
 
 class Timer(object):
     """A simple timer."""
+
     def __init__(self):
         self.total_time = 0.
         self.calls = 0
@@ -110,7 +109,7 @@ def write_voc_results_file(all_boxes, dataset, outpath, set_type):
         filename = get_voc_results_file_template(outpath, set_type, cls)
         with open(filename, 'wt') as f:
             for im_ind, index in enumerate(dataset.ids):
-                dets = all_boxes[cls_ind+1][im_ind]
+                dets = all_boxes[cls_ind + 1][im_ind]
                 if dets == []:
                     continue
                 # the VOCdevkit expects 1-based indices
@@ -134,8 +133,8 @@ def do_python_eval(output_dir, annopath, imgsetpath, target_domain, use_07=True,
     for i, cls in enumerate(labelmap):
         filename = get_voc_results_file_template(output_dir, set_type, cls)
         rec, prec, ap = voc_eval(
-           filename, annopath, imgsetpath.format(set_type), cls, cachedir,
-           ovthresh=overlap_threshold, use_07_metric=use_07)
+            filename, annopath, imgsetpath.format(set_type), cls, cachedir,
+            ovthresh=overlap_threshold, use_07_metric=use_07)
         aps += [ap]
 
         if FULL_REPORT:
@@ -253,7 +252,7 @@ def voc_eval(detpath,
         if i % 100 == 0:
             if FULL_REPORT:
                 print('Reading annotation for {:d}/{:d}'.format(
-                   i + 1, len(imagenames)))
+                    i + 1, len(imagenames)))
     # save
     if FULL_REPORT:
         print('Saving cached annotations to {:s}'.format(cachefile))
@@ -354,7 +353,7 @@ def test_net(output_dir, net, dataset, set_type, use_07=True, conf_thresh=0.01, 
     #    all_boxes[cls][image] = N x 5 array of detections in
     #    (x1, y1, x2, y2, score)
     all_boxes = [[[] for _ in range(num_images)]
-                 for _ in range(len(labelmap)+1)]
+                 for _ in range(len(labelmap) + 1)]
 
     # timers
     _t = {'im_detect': Timer(), 'misc': Timer()}
@@ -423,5 +422,3 @@ def evaluate(model, dataset, save_folder, overlap_thresh=0.45):
     accuracy_dict = test_net(save_folder, model, dataset, set_type='test', use_07=True, conf_thresh=0.01,
                              overlap_thresh=overlap_thresh)
     return accuracy_dict
-
-

@@ -91,7 +91,6 @@ vgg = nn.Sequential(
     nn.ReLU()  # relu5-4
 )
 
-
 # class Net(nn.Module):
 #     def __init__(self, encoder, decoder):
 #         super(Net, self).__init__()

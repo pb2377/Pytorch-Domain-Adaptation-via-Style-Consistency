@@ -1,33 +1,26 @@
-import os
-import torch
-import eval
 import copy
-from utils.utils import export_images
+import json
+import os
+from itertools import cycle
+
+import torch
+import torch.utils.data as data
 from torch.utils.tensorboard import SummaryWriter
+
+import eval
+import preprocess
 from cfg import *
-from data import datasets, style_detection_collate, BaseTransform, VOCAnnotationTransform
+from data import datasets, style_detection_collate, BaseTransform
 from models.layers.modules import MultiBoxLoss, FeatureConsistency
 from utils.augmentations import StyleAugmentation
-import torch.utils.data as data
-import preprocess
-import json
+from utils.utils import export_images
 from utils.utils import report_and_save
 
 
 def base_trainer(model, args, output_dir, stylized_root, num_classes):
-    # check output directory
-    # load checkpoint
-    if args.checkpoint is not None:
-        if os.path.exists(args.checkpoint):
-            state_dict_to_load = torch.load(args.checkpoint, map_location='cpu')
-            model.load_state_dict(state_dict_to_load)
-            print('Loading model from {}'.format(args.checkpoint))
-        else:
-            raise OSError('Cannot find checkoint {}'.format(args.checkpoint))
-
     # set up dataloaders
-    train_transform = StyleAugmentation(cfg['min_dim'], MEANS, args.photometric, random_sample=args.random_sample,
-                                        expand=args.expand)
+    train_transform = StyleAugmentation(cfg['min_dim'], MEANS, False, random_sample=True,
+                                        expand=True)
 
     train_dataset = datasets.StylizedVOCDetection(args.voc_root, args.target_domain,
                                                   image_sets=[('2007', 'trainval'), ('2012', 'trainval')],
@@ -46,7 +39,7 @@ def base_trainer(model, args, output_dir, stylized_root, num_classes):
     # training sub functions
     ssd_criterion = MultiBoxLoss(num_classes, 0.5, True, 0, True, 3, 0.5, False, cfg, torch.cuda.is_available(),
                                  neg_thresh=0.)
-    style_criterion = FeatureConsistency(cosine=args.cosine)
+    style_criterion = FeatureConsistency()
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum,
                                 weight_decay=args.weight_decay)
 
@@ -60,14 +53,13 @@ def base_trainer(model, args, output_dir, stylized_root, num_classes):
         os.makedirs(os.path.join(output_dir, 'weights'))
 
     # Ensure dataset is fully preprocessed
-    if not args.no_prep:
-        preprocess.check_preprocess(args, train_loader, stylized_root, pseudolabel=False)
+    preprocess.check_preprocess(args, train_loader, stylized_root, args.stage1_its, pseudolabel=False)
 
     model, best_model, best_map, accuracy_history = train(model, ssd_criterion, optimizer, train_loader,
-                                                                  val_data, args.max_its, output_dir,
-                                                                  log_freq=args.log_freq, test_freq=args.test_freq,
-                                                                  aux_criterion=style_criterion)
-    report_and_save(model, best_model, best_map, accuracy_history, output_dir, args.max_its, pseudolabel=False)
+                                                          val_data, args.stage1_its, output_dir,
+                                                          log_freq=args.log_freq, test_freq=args.test_freq,
+                                                          aux_criterion=style_criterion)
+    report_and_save(model, best_model, best_map, accuracy_history, output_dir, args.stage1_its, pseudolabel=False)
     return model
 
 
@@ -80,82 +72,68 @@ def train(model, criterion, optimizer, train_loader, val_dataset, max_iter, outp
     best_model = copy.deepcopy(model.state_dict())
 
     # Tensorboard writer
-    writer = SummaryWriter(log_dir=output_path)
+    writer = SummaryWriter(log_dir=output_path + '/logs')
     writer.add_scalar("Test_mAP", 0., 0)
 
     if torch.cuda.is_available():
         model = model.cuda()
-    max_eps = (max_iter / len(train_loader)) + 1
-    while iteration <= max_iter:
-        for images, style_ims, targets in train_loader:
-            optimizer.zero_grad()
 
-            if iteration > max_iter:
-                break
+    for iteration, (images, style_ims, targets) in enumerate(cycle(train_loader)):
+        optimizer.zero_grad()
 
-            if torch.cuda.is_available():
-                style_ims = style_ims.cuda()
-                images = images.cuda()
-                targets = [ann.cuda() for ann in targets]
+        if iteration > max_iter:
+            break
 
-            # combine image batch
-            images = torch.cat((images, style_ims), 0)
-            targets = targets * 2
+        if torch.cuda.is_available():
+            style_ims = style_ims.cuda()
+            images = images.cuda()
+            targets = [ann.cuda() for ann in targets]
 
-            out, aux_outputs = model(images)
-            loss_l, loss_c = criterion(out, targets)
-            loss = loss_l + loss_c
+        # combine image batch
+        images = torch.cat((images, style_ims), 0)
+        targets = targets * 2
 
-            loss_aux = 0.
+        out, aux_outputs = model(images)
+        loss_l, loss_c = criterion(out, targets)
+        loss = loss_l + loss_c
 
-            for idx in range(len(aux_outputs)):
-                aux_ph = aux_outputs[idx][:images.size(0)//2, :, :, :]
-                aux_st = aux_outputs[idx][images.size(0)//2:, :, :, :]
-                loss_aux += aux_criterion(aux_ph, aux_st)
+        loss_aux = 0.
 
-            loss = loss + loss_aux
+        for idx in range(len(aux_outputs)):
+            aux_ph = aux_outputs[idx][:images.size(0) // 2, :, :, :]
+            aux_st = aux_outputs[idx][images.size(0) // 2:, :, :, :]
+            loss_aux += aux_criterion(aux_ph, aux_st)
 
-            loss.backward()
-            optimizer.step()
+        loss = loss + loss_aux
 
-            if not iteration % log_freq:
-                # make summary writer for loc lss, conf loss, consistency_loss,
-                writer.add_scalar("Loss", loss.item(), iteration)
-                writer.add_scalar("Conf_loss", loss_c.item(), iteration)
-                writer.add_scalar("Loc_loss", loss_l.item(), iteration)
-                writer.add_scalar("Style_loss", loss_aux, iteration)
+        loss.backward()
+        optimizer.step()
 
-            if iteration > 0 and not iteration % 5000:
-                print('Saving state, iter:', iteration)
-                save_path = os.path.join(output_path, 'weights', 'iteraton-{}.pth'.format(iteration))
-                torch.save(model.state_dict(), save_path)
+        if not iteration % log_freq:
+            # make summary writer for loc lss, conf loss, consistency_loss,
+            writer.add_scalar("Loss", loss.item(), iteration)
+            writer.add_scalar("Conf_loss", loss_c.item(), iteration)
+            writer.add_scalar("Loc_loss", loss_l.item(), iteration)
+            writer.add_scalar("Style_loss", loss_aux, iteration)
 
-            if iteration >= max_iter - (10*test_freq):
-                if iteration == max_iter or iteration % test_freq == 0:
-                    model.eval()
-                    eval.FULL_REPORT = False
-                    accuracy_history.append(eval.evaluate(model, val_dataset,
-                                                          os.path.join(output_path, 'iteration-{}'.format(iteration))))
-                    model.train()
+        if iteration > 0 and not iteration % 5000:
+            print('Saving state, iter:', iteration)
+            save_path = os.path.join(output_path, 'weights', 'iteraton-{}.pth'.format(iteration))
+            torch.save(model.state_dict(), save_path)
 
-                    # keep best  model
-                    writer.add_scalar("Test_mAP", accuracy_history[-1]['mAP'], iteration)
-                    if accuracy_history[-1]['mAP'] > best_map:
-                        best_map = accuracy_history[-1]['mAP']
-                        best_model = copy.deepcopy(model.state_dict())
+        if iteration >= max_iter - (10 * test_freq):
+            if iteration == max_iter or iteration % test_freq == 0:
+                model.eval()
+                eval.FULL_REPORT = False
+                accuracy_history.append(eval.evaluate(model, val_dataset,
+                                                      os.path.join(output_path, 'iteration-{}'.format(iteration))))
+                model.train()
 
-                    # Add to summary writer
-            # else:
-            #     if not iteration % 1000 and iteration > 0:
-            #         model.eval()
-            #         eval.FULL_REPORT = False
-            #         acc = eval.evaluate(model, val_dataset, os.path.join(output_path, 'tempdets'.format(iteration)))
-            #         writer.add_scalar("Test_mAP", acc['mAP'], iteration)
-            #         model.train()
-
-            iteration += 1
-        epoch += 1
-        # print('{}/{} Epochs Completed'.format(epoch, max_eps))
+                # keep best  model
+                writer.add_scalar("Test_mAP", accuracy_history[-1]['mAP'], iteration)
+                if accuracy_history[-1]['mAP'] > best_map:
+                    best_map = accuracy_history[-1]['mAP']
+                    best_model = copy.deepcopy(model.state_dict())
 
     return model, best_model, best_map, accuracy_history
 
@@ -169,22 +147,22 @@ def boxes_from_dets(detections, thresh=0.25):
             bidx_targets = None
             bidx_scores = None
             for cidx in range(1, detections.size(1)):
-                    scores = detections[bidx, cidx, :, 0].squeeze()
-                    bboxes = detections[bidx, cidx, :, 1:]
+                scores = detections[bidx, cidx, :, 0].squeeze()
+                bboxes = detections[bidx, cidx, :, 1:]
 
-                    # scores = scores.view(-1, 1)
-                    lookup = scores > pthresh
-                    if lookup.sum() > 0:
-                        scores = scores[lookup]
-                        bboxes = bboxes[lookup, :]
-                        lbls = torch.ones(bboxes.size(0), 1) * (cidx - 1)
-                        bboxes = torch.cat((bboxes, lbls), 1)
-                        if bidx_targets is None:
-                            bidx_targets = bboxes
-                            bidx_scores = scores
-                        else:
-                            bidx_targets = torch.cat((bidx_targets, bboxes), 0)
-                            bidx_scores = torch.cat((bidx_scores, scores), 0)
+                # scores = scores.view(-1, 1)
+                lookup = scores > pthresh
+                if lookup.sum() > 0:
+                    scores = scores[lookup]
+                    bboxes = bboxes[lookup, :]
+                    lbls = torch.ones(bboxes.size(0), 1) * (cidx - 1)
+                    bboxes = torch.cat((bboxes, lbls), 1)
+                    if bidx_targets is None:
+                        bidx_targets = bboxes
+                        bidx_scores = scores
+                    else:
+                        bidx_targets = torch.cat((bidx_targets, bboxes), 0)
+                        bidx_scores = torch.cat((bidx_scores, scores), 0)
 
             if bidx_targets is None:
                 pthresh *= 0.9
@@ -212,7 +190,7 @@ def visualize_boxes(images, style_ims, targets, image_base=None):
         annos = []
         for anno in bidx_anno:
             lbl = int(anno[-1])
-            anno = [i*images.size(-1) for i in anno[:-1]]
+            anno = [i * images.size(-1) for i in anno[:-1]]
             anno.append(lbl)
             annos.append(anno)
         if style_ims is None:

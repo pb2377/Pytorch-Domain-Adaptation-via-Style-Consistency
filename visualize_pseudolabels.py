@@ -1,11 +1,12 @@
-import torch
-import torchvision.transforms as transforms
-from data import ArtDetection, VOCAnnotationTransform
-from PIL import Image, ImageDraw
+import json
 import os
 import os.path as osp
-import json
 import sys
+
+from PIL import Image, ImageDraw
+
+from data import VOCAnnotationTransform
+
 if sys.version_info[0] == 2:
     import xml.etree.cElementTree as ET
 else:
@@ -42,7 +43,7 @@ def main():
         int_annos = []
         for gt_anno in gt_annos:
             new_anno = [gt_anno[0] * width, gt_anno[1] * height,
-                              gt_anno[2] * width, gt_anno[3] * height, gt_anno[4]]
+                        gt_anno[2] * width, gt_anno[3] * height, gt_anno[4]]
             new_anno = [int(round(i)) for i in new_anno]
             int_annos.append(new_anno)
 
@@ -51,10 +52,8 @@ def main():
         ps_image = draw_annos(image.copy(), ps_anno, colour=(0, 0, 255))
         gt_image = draw_annos(image.copy(), gt_anno, colour=(0, 255, 0))
 
-
         export_image([ps_image, gt_image], output_path=osp.join(output_path, img_id + '.png'))
         # raise NotImplementedError
-
 
     pass
 
@@ -111,7 +110,6 @@ VOC_CLASSES = (  # always index 0
     'cow', 'diningtable', 'dog', 'horse',
     'motorbike', 'person', 'pottedplant',
     'sheep', 'sofa', 'train', 'tvmonitor')
-
 
 if __name__ == '__main__':
     main()
