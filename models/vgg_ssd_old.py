@@ -46,7 +46,6 @@ class SSD(nn.Module):
 
         self.softmax = nn.Softmax(dim=-1)
         self.detect = Detect(num_classes, 0, 200, 0.01, 0.45, cfg)
-        # self.detect = Detect()
 
     def forward(self, x, encode_only=False):
         """Applies network layers and ops on input image(s) x.
@@ -113,7 +112,7 @@ class SSD(nn.Module):
                       aux_outputs
             )
         else:
-            output = self.detect.apply(self.detect.variance, 21, 0, 200, 0.01, 0.45,
+            output = self.detect(
                 loc.view(loc.size(0), -1, 4),  # loc preds
                 self.softmax(conf.view(conf.size(0), -1,
                                        self.num_classes)),  # conf preds
